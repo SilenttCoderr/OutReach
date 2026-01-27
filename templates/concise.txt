@@ -1,0 +1,9 @@
+Subject: GenAI Intern @ Motilal Oswal - AI/ML Opportunities at {{ company }}
+
+Hi {{ recruiter_name.split()[0] }},
+
+Final-year B.Tech student with GenAI internship experience - built RAG systems and multi-agent architectures at Motilal Oswal. Resume attached.
+
+Can we connect?
+
+Ansh

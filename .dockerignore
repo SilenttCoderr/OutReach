@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+.env
+.venv
+logs/
+uploads/
+token.json
+data/tracking.json
+.git
+.gitignore
+README.md
+task.md

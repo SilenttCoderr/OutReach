@@ -1,0 +1,10 @@
+Subject: GenAI Intern @ Motilal Oswal - Interested in AI/ML Roles at {{ company }}
+
+Hi {{ recruiter_name.split()[0] }},
+
+I'm a final-year CS student at Bennett University with 6+ months experience as a GenAI Intern at Motilal Oswal, where I built production RAG systems and multi-agent architectures using LangChain and Claude. I'm interested in AI/ML opportunities at {{ company }} because of my focus on building practical AI solutions.
+
+How can I start the interview process?
+
+Best,
+Ansh Agrawal

@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Email Outreach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --bg-hover: #24242e;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2a2a3a;
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .auth-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .auth-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-value.success {
+            color: var(--success);
+        }
+
+        .stat-value.warning {
+            color: var(--warning);
+        }
+
+        .stat-value.error {
+            color: var(--error);
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-zone input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .upload-text span {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* File Info */
+        .file-info {
+            display: none;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .file-info.visible {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Toggle */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        .toggle-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toggle-label span:first-child {
+            font-weight: 500;
+        }
+
+        .toggle-label span:last-child {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: var(--border);
+            border-radius: 26px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle input:checked+.toggle-slider {
+            background: var(--accent);
+        }
+
+        .toggle input:checked+.toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Attachment Section */
+        .attachment-section {
+            margin-bottom: 1rem;
+        }
+
+        .section-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-label .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .attachment-zone {
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .attachment-zone:hover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .attachment-zone input {
+            display: none;
+        }
+
+        .attachment-list {
+            margin-top: 0.5rem;
+        }
+
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .attachment-item-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            overflow: hidden;
+        }
+
+        .attachment-item-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .attachment-item-size {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        .attachment-remove {
+            background: none;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        /* Email Preview */
+        .email-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .email-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .email-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .email-item.active {
+            background: var(--bg-hover);
+            border-left: 3px solid var(--accent);
+        }
+
+        .email-to {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .email-company {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .email-company .badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            background: var(--accent);
+            border-radius: 4px;
+            color: white;
+        }
+
+        /* Email Detail */
+        .email-detail {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .email-detail.visible {
+            display: block;
+        }
+
+        .email-detail-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .email-subject {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .email-meta {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .email-body {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 3px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 3px solid var(--error);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">📧</div>
+                <h1>Cold Email Outreach</h1>
+            </div>
+            <div class="auth-status" id="authStatus">
+                <span class="auth-dot" id="authDot"></span>
+                <span id="authText">Checking...</span>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Total Emails</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Drafts Created</div>
+                <div class="stat-value warning" id="statDraft">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Sent</div>
+                <div class="stat-value success" id="statSent">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Failed</div>
+                <div class="stat-value error" id="statFailed">0</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Panel - Controls -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📁 Upload Contacts</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-zone" id="uploadZone">
+                            <input type="file" id="fileInput" accept=".csv">
+                            <div class="upload-icon">📄</div>
+                            <div class="upload-text">
+                                Drop your CSV here or <span>browse</span>
+                            </div>
+                        </div>
+
+                        <div class="file-info" id="fileInfo">
+                            <div class="file-name">
+                                <span>📊</span>
+                                <span id="fileName">-</span>
+                            </div>
+                            <div class="file-stats">
+                                <span><strong id="totalContacts">0</strong> contacts</span>
+                                <span><strong id="newContacts">0</strong> new</span>
+                            </div>
+                        </div>
+
+                        <div class="toggle-group">
+                            <div class="toggle-label">
+                                <span>🤖 AI-Powered Emails</span>
+                                <span>Use Gemini to personalize each email</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="llmToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <!-- Attachment Upload Section -->
+                        <div class="attachment-section">
+                            <div class="section-label">📎 Attachments <span class="hint">(Max 25MB total)</span></div>
+                            <div class="attachment-zone" id="attachmentZone">
+                                <input type="file" id="attachmentInput" multiple>
+                                <span>📎 Add files (PDF, DOC, etc.)</span>
+                            </div>
+                            <div class="attachment-list" id="attachmentList"></div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="previewBtn" disabled>
+                                👁️ Preview
+                            </button>
+                            <button class="btn btn-primary" id="draftBtn" disabled>
+                                ✉️ Create Drafts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Preview -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">✉️ Email Preview</div>
+                    <span id="previewCount" style="color: var(--text-secondary); font-size: 0.875rem;">-</span>
+                </div>
+                <div id="previewArea">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Upload a CSV and click Preview to see generated emails</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        // State
+        let emails = [];
+        let selectedIndex = 0;
+        let attachments = [];  // Store attachment files
+        const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024;  // 25MB Gmail limit
+
+        // Elements
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const previewBtn = document.getElementById('previewBtn');
+        const draftBtn = document.getElementById('draftBtn');
+        const llmToggle = document.getElementById('llmToggle');
+        const previewArea = document.getElementById('previewArea');
+        const attachmentZone = document.getElementById('attachmentZone');
+        const attachmentInput = document.getElementById('attachmentInput');
+        const attachmentList = document.getElementById('attachmentList');
+
+        // Initialize
+        checkAuth();
+        loadStats();
+
+        // Auth check
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth/status');
+                const data = await res.json();
+
+                const dot = document.getElementById('authDot');
+                const text = document.getElementById('authText');
+
+                if (data.authenticated) {
+                    dot.classList.add('connected');
+                    text.textContent = data.email || 'Connected';
+                } else {
+                    text.textContent = 'Not connected';
+                    text.style.cursor = 'pointer';
+                    text.onclick = authenticate;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function authenticate() {
+            try {
+                const res = await fetch('/api/auth', { method: 'POST' });
+                if (res.ok) {
+                    showToast('Gmail connected!', 'success');
+                    checkAuth();
+                }
+            } catch (e) {
+                showToast('Auth failed', 'error');
+            }
+        }
+
+        // Stats
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+
+                document.getElementById('statTotal').textContent = data.total || 0;
+                document.getElementById('statDraft').textContent = data.draft || 0;
+                document.getElementById('statSent').textContent = data.sent || 0;
+                document.getElementById('statFailed').textContent = data.failed || 0;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // File upload
+        uploadZone.onclick = () => fileInput.click();
+
+        uploadZone.ondragover = (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        };
+
+        uploadZone.ondragleave = () => uploadZone.classList.remove('dragover');
+
+        uploadZone.ondrop = (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) uploadFile(file);
+        };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) uploadFile(file);
+        };
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error('Upload failed');
+
+                const data = await res.json();
+
+                document.getElementById('fileName').textContent = data.filename;
+                document.getElementById('totalContacts').textContent = data.total_contacts;
+                document.getElementById('newContacts').textContent = data.new_contacts;
+
+                fileInfo.classList.add('visible');
+                previewBtn.disabled = false;
+                draftBtn.disabled = false;
+
+                showToast(`Loaded ${data.total_contacts} contacts`, 'success');
+            } catch (e) {
+                showToast('Upload failed: ' + e.message, 'error');
+            }
+        }
+
+        // Attachment handling
+        attachmentZone.onclick = () => attachmentInput.click();
+
+        attachmentInput.onchange = (e) => {
+            const files = Array.from(e.target.files);
+            addAttachments(files);
+            attachmentInput.value = '';  // Reset to allow re-selecting same file
+        };
+
+        function addAttachments(files) {
+            for (const file of files) {
+                // Check if already added
+                if (attachments.some(a => a.name === file.name)) {
+                    showToast(`${file.name} already added`, 'error');
+                    continue;
+                }
+
+                // Check total size
+                const currentSize = attachments.reduce((sum, f) => sum + f.size, 0);
+                if (currentSize + file.size > MAX_ATTACHMENT_SIZE) {
+                    showToast('Total attachments exceed 25MB limit', 'error');
+                    continue;
+                }
+
+                attachments.push(file);
+            }
+            renderAttachments();
+        }
+
+        function removeAttachment(index) {
+            attachments.splice(index, 1);
+            renderAttachments();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function renderAttachments() {
+            if (attachments.length === 0) {
+                attachmentList.innerHTML = '';
+                return;
+            }
+
+            const totalSize = attachments.reduce((sum, f) => sum + f.size, 0);
+            let html = '';
+
+            attachments.forEach((file, i) => {
+                const icon = file.name.endsWith('.pdf') ? '📄' : '📎';
+                html += `
+                    <div class="attachment-item">
+                        <div class="attachment-item-info">
+                            <span>${icon}</span>
+                            <span class="attachment-item-name" title="${file.name}">${file.name}</span>
+                            <span class="attachment-item-size">${formatFileSize(file.size)}</span>
+                        </div>
+                        <button class="attachment-remove" onclick="removeAttachment(${i})">✕</button>
+                    </div>
+                `;
+            });
+
+            html += `<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
+                Total: ${formatFileSize(totalSize)} / 25 MB
+            </div>`;
+
+            attachmentList.innerHTML = html;
+        }
+
+        // Preview
+        previewBtn.onclick = async () => {
+            const useLLM = llmToggle.checked;
+            previewBtn.innerHTML = useLLM ? '<span class="loading"></span> Generating with AI...' : '<span class="loading"></span> Loading...';
+            previewBtn.disabled = true;
+
+            try {
+                console.log('LLM Toggle:', useLLM);
+                const res = await fetch(`/api/preview?limit=10&use_llm=${useLLM ? 'true' : 'false'}`);
+                const data = await res.json();
+
+                emails = data.emails || [];
+                renderEmailList();
+
+                const modeText = useLLM ? '🤖 AI' : '📝 Template';
+                document.getElementById('previewCount').textContent = `${emails.length} emails (${modeText})`;
+            } catch (e) {
+                showToast('Preview failed', 'error');
+            } finally {
+                previewBtn.innerHTML = '👁️ Preview';
+                previewBtn.disabled = false;
+            }
+        };
+
+        function renderEmailList() {
+            if (emails.length === 0) {
+                previewArea.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <p>No new contacts to email</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div style="display: grid; grid-template-columns: 250px 1fr;">';
+
+            // Email list
+            html += '<div class="email-list">';
+            emails.forEach((email, i) => {
+                html += `
+                    <div class="email-item ${i === selectedIndex ? 'active' : ''}" onclick="selectEmail(${i})">
+                        <div class="email-to">${email.recruiter_name}</div>
+                        <div class="email-company">
+                            ${email.company}
+                            ${email.company_type ? `<span class="badge">${email.company_type}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            // Email detail
+            const selected = emails[selectedIndex];
+            html += `
+                <div class="email-detail visible">
+                    <div class="email-detail-header">
+                        <div class="email-subject">${selected.subject || 'No subject'}</div>
+                        <div class="email-meta">To: ${selected.recruiter_email}</div>
+                    </div>
+                    <div class="email-body">${selected.body || 'No body'}</div>
+                </div>
+            `;
+
+            html += '</div>';
+            previewArea.innerHTML = html;
+        }
+
+        function selectEmail(index) {
+            selectedIndex = index;
+            renderEmailList();
+        }
+
+        // Create Drafts
+        draftBtn.onclick = async () => {
+            const attachCount = attachments.length;
+            const confirmMsg = attachCount > 0
+                ? `Create drafts for all new contacts with ${attachCount} attachment(s)?`
+                : 'Create drafts for all new contacts?';
+            if (!confirm(confirmMsg)) return;
+
+            draftBtn.innerHTML = '<span class="loading"></span> Creating...';
+            draftBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('use_llm', llmToggle.checked);
+
+                // Add attachments
+                attachments.forEach((file, i) => {
+                    formData.append('attachments', file);
+                });
+
+                const res = await fetch('/api/draft', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                showToast(`Created ${data.success} drafts!`, 'success');
+                loadStats();
+
+                // Reload preview
+                previewBtn.click();
+            } catch (e) {
+                showToast('Failed to create drafts', 'error');
+            } finally {
+                draftBtn.innerHTML = '✉️ Create Drafts';
+                draftBtn.disabled = false;
+            }
+        };
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            toastMessage.textContent = message;
+            toast.className = `toast ${type} visible`;
+
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

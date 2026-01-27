@@ -1,0 +1,108 @@
+{
+    "name": "Ansh Agrawal",
+    "email": "ansh.agrawal1883@gmail.com",
+    "phone": "+91-9664174593",
+    "linkedin": "https://linkedin.com/in/ansh-agrawal",
+    "github": "https://github.com/ansh-agrawal",
+    "education": {
+        "degree": "B.Tech in Computer Science (AI/ML)",
+        "university": "Bennett University",
+        "location": "Greater Noida, India",
+        "cgpa": 8.02,
+        "graduation": "May 2026"
+    },
+    "current_role": {
+        "title": "GenAI Intern",
+        "company": "Motilal Oswal Financial Services Ltd.",
+        "location": "Mumbai, India",
+        "duration": "June 2025 – Present",
+        "duration_months": 6
+    },
+    "skills": {
+        "primary": [
+            "Python",
+            "TensorFlow",
+            "PyTorch",
+            "LangChain",
+            "LangGraph",
+            "FastAPI"
+        ],
+        "ml_frameworks": [
+            "Scikit-learn",
+            "OpenCV",
+            "Pandas",
+            "NumPy"
+        ],
+        "llm_tools": [
+            "RAG",
+            "GraphRAG",
+            "LightRAG",
+            "Claude",
+            "Gemini API",
+            "Google ADK"
+        ],
+        "other": [
+            "C++",
+            "Java",
+            "JavaScript",
+            "Next.js",
+            "MySQL",
+            "Solidity"
+        ]
+    },
+    "highlights": [
+        "Built production RAG systems and multi-agent architectures at Motilal Oswal",
+        "Engineered ReAct-style SQL agent using LangChain and Claude Sonnet-3",
+        "Developed GraphRAG/LightRAG retrieval agent for financial research documents",
+        "IEEE publication on cattle disease detection with 97.97% accuracy using YOLO + EfficientNet",
+        "1st Place in BugSpray debugging contest at Bennett University Techfest"
+    ],
+    "projects": [
+        {
+            "name": "RAG-Chatbot",
+            "tech": [
+                "Gemini API",
+                "LangChain",
+                "LangGraph",
+                "ChromaDB",
+                "FastAPI",
+                "Next.js"
+            ],
+            "description": "Retrieval-Augmented Generation chatbot with document upload, chunking, and contextual responses"
+        },
+        {
+            "name": "YoloNet",
+            "tech": [
+                "YOLOv5",
+                "EfficientNet-B0",
+                "Python",
+                "Pandas"
+            ],
+            "description": "IEEE-published hybrid model for cattle disease detection achieving 97.97% accuracy"
+        },
+        {
+            "name": "Gramalyzer",
+            "tech": [
+                "Whisper",
+                "Scikit-learn",
+                "Random Forest"
+            ],
+            "description": "Grammar scoring system for spoken text with RMSE 0.9796"
+        }
+    ],
+    "preferred_roles": [
+        "AI/ML Engineer",
+        "GenAI Engineer",
+        "Machine Learning Engineer",
+        "Data Scientist",
+        "Software Engineer (AI focus)"
+    ],
+    "job_type": [
+        "full-time",
+        "internship-to-job"
+    ],
+    "target_companies": {
+        "preference": "startups",
+        "reason": "Learn and earn together with good compensation"
+    }
+}
