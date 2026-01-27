@@ -10,3 +10,4 @@ data/tracking.json
 .gitignore
 README.md
 task.md
+web/
