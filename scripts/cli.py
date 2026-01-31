@@ -2,10 +2,14 @@
 """
 Cold Email Outreach System CLI
 Automate personalized cold emails to recruiters.
+Run from project root: python scripts/cli.py [command] [options]
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import click
-from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel

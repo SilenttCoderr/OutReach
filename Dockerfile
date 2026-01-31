@@ -28,5 +28,5 @@ RUN mkdir -p uploads logs
 # Expose port (railway typically uses PORT env var, but 8000 is our default)
 EXPOSE 8000
 
-# Command to run the application using uvicorn, reading PORT from environment (default 8000)
-CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
+# Command: run app.py so it reads PORT from environment (Railway/Nixpacks set PORT)
+CMD ["python", "app.py"]

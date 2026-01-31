@@ -9,12 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Third-party imports
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import uvicorn
 
 # Local imports
@@ -27,6 +28,11 @@ from src.auth_routes import router as auth_router
 from src.stripe_routes import router as stripe_router
 
 app = FastAPI(title="Cold Email Outreach", version="2.0")
+
+# Rate limiting: per-IP limits on /api/draft, /api/send/{id}, /api/send-all (20/min each)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Session middleware for OAuth
 app.add_middleware(
@@ -66,6 +72,21 @@ async def startup():
     Base.metadata.create_all(bind=engine)
 
 
+@app.get("/health")
+async def health():
+    """Health check for platform probes. No auth required. Optionally checks DB connectivity."""
+    from sqlalchemy import text
+    db_ok = False
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+            db_ok = True
+    except Exception:
+        pass
+    status = "ok" if db_ok else "degraded"
+    return {"status": status, "database": "ok" if db_ok else "error"}
+
+
 # Include auth router
 # Include routers
 app.include_router(auth_router, prefix="/api")
@@ -89,10 +110,10 @@ class StatsResponse(BaseModel):
     failed: int
 
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_frontend():
-    """Serve the main frontend."""
-    return FileResponse("static/index.html")
+@app.get("/")
+async def root():
+    """API root. Production frontend is served from Vercel (web/)."""
+    return {"message": "OutreachPro API", "docs": "/docs", "health": "/health"}
 
 
 from sqlalchemy.orm import Session
@@ -102,22 +123,23 @@ from src.models import User, Contact, EmailLog
 
 @app.get("/api/stats")
 async def get_stats(user: User = Depends(require_auth), db: Session = Depends(get_db)):
-    """Get email tracking statistics from database."""
+    """Get email tracking statistics and credits from database."""
     from sqlalchemy import func
-    
+
     # Query actual counts from EmailLog table
     total = db.query(func.count(EmailLog.id)).filter(EmailLog.user_id == user.id).scalar() or 0
     sent = db.query(func.count(EmailLog.id)).filter(EmailLog.user_id == user.id, EmailLog.status == "sent").scalar() or 0
     draft = db.query(func.count(EmailLog.id)).filter(EmailLog.user_id == user.id, EmailLog.status == "draft").scalar() or 0
     failed = db.query(func.count(EmailLog.id)).filter(EmailLog.user_id == user.id, EmailLog.status == "failed").scalar() or 0
     pending = total - sent - draft - failed
-    
+    pending = pending if pending > 0 else 0
+
     return {
-        "total": total,
-        "sent": sent,
-        "draft": draft,
-        "pending": pending if pending > 0 else 0,
-        "failed": failed
+        "credits_available": user.credits,
+        "total_sent": sent,
+        "total_drafted": draft,
+        "pending": pending,
+        "failed_emails": failed,
     }
 
 
@@ -301,7 +323,9 @@ async def auth_status(user: User = Depends(require_auth)):
 
 
 @app.post("/api/draft")
+@limiter.limit("20/minute")
 async def create_drafts(
+    request: Request,
     use_llm: str = Form("false"),
     attachments: List[UploadFile] = File(default=[]),
     user: User = Depends(require_auth),
@@ -419,7 +443,9 @@ async def get_drafts(user: User = Depends(require_auth), db: Session = Depends(g
 
 
 @app.post("/api/send/{draft_id}")
+@limiter.limit("20/minute")
 async def send_draft(
+    request: Request,
     draft_id: int,
     user: User = Depends(require_auth),
     db: Session = Depends(get_db)
@@ -485,7 +511,9 @@ async def send_draft(
 
 
 @app.post("/api/send-all")
+@limiter.limit("20/minute")
 async def send_all_drafts(
+    request: Request,
     background_tasks: BackgroundTasks,
     delay_seconds: int = 30,
     user: User = Depends(require_auth),
@@ -550,11 +578,5 @@ async def clear_tracking():
     return {"status": "cleared"}
 
 
-# Mount static files
-static_dir = Path("static")
-static_dir.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # nosec
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))  # nosec

@@ -58,5 +58,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Secrets
+token.json
+credentials.json
+client_secret*.json
+
 # OS
 Thumbs.db

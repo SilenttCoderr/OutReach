@@ -1,5 +1,10 @@
-import os
+"""Test Gmail auth for a user. Run from project root: python scripts/test_gmail_auth.py"""
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import os
 from src.database import SessionLocal
 from src.models import User
 from src.gmail_client import GmailClient

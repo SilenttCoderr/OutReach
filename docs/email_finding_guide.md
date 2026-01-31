@@ -194,11 +194,11 @@ Michael Chen,m.chen@techcorp.com,TechCorp,ML Engineer,enterprise,Fortune 500 wit
 Once you have your CSV ready:
 
 ```bash
-# Preview emails
-python cli.py preview --input data/my_recruiters.csv
+# Preview emails (run from project root)
+python scripts/cli.py preview --input data/my_recruiters.csv
 
 # Create drafts for review
-python cli.py draft --input data/my_recruiters.csv
+python scripts/cli.py draft --input data/my_recruiters.csv
 ```
 
 Good luck with your job search! 🚀

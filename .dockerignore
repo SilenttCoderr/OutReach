@@ -5,9 +5,15 @@ __pycache__
 logs/
 uploads/
 token.json
-data/tracking.json
 .git
 .gitignore
 README.md
 task.md
 web/
+
+# Dev/sample data and tooling (not needed in deploy image)
+data/
+.agent/
+design-system/
+static/
+scripts/

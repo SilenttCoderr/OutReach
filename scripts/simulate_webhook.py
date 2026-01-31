@@ -1,3 +1,4 @@
+"""Simulate Stripe webhook for local testing. Run from project root: python scripts/simulate_webhook.py"""
 import time
 import stripe
 import requests

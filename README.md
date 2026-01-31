@@ -98,6 +98,7 @@ The `web/` directory is ready for Vercel.
 - **Build Command**: `pip install -r requirements.txt`
 - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
 - **Database**: Switch `DATABASE_URL` to PostgreSQL.
+- **Rate limiting**: Per-IP limits apply to `/api/draft`, `/api/send/{id}`, and `/api/send-all` (20 requests/minute each) to reduce abuse.
 
 ---
 
