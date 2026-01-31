@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,6 +18,18 @@ import {
 import { fetchStats, checkAuthStatus, buyCredits, type Stats } from "@/services/api";
 
 export default function DashboardPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <DashboardContent />
+        </Suspense>
+    );
+}
+
+function DashboardContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [stats, setStats] = useState<Stats | null>(null);
