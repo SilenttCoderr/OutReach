@@ -10,9 +10,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Install system dependencies (build-essential needed for some python packages)
+# Install system dependencies (build-essential and libpq-dev for psycopg2)
 RUN apt-get update && apt-get install -y \
     build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
@@ -25,8 +26,9 @@ COPY . .
 # Create uploads and logs directories
 RUN mkdir -p uploads logs
 
-# Expose port (railway typically uses PORT env var, but 8000 is our default)
+# Expose port (Railway sets PORT env var)
 EXPOSE 8000
 
-# Command: run app.py so it reads PORT from environment (Railway/Nixpacks set PORT)
-CMD ["python", "app.py"]
+# Command: Use uvicorn with shell expansion for PORT (Railway sets this)
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
