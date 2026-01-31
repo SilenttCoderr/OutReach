@@ -98,17 +98,7 @@ export async function buyCredits(credits: number = 50, amount: number = 1000): P
     return res.json();
 }
 
-export interface Contact {
-    id: number;
-    name: string;
-    email: string;
-    company: string;
-    role: string;
-    status: string;
-    created_at: string;
-}
-
-export async function fetchContacts(status?: string): Promise<Contact[]> {
+export async function fetchContacts(status?: string): Promise<Recruiter[]> {
     const headers = getAuthHeader();
     const url = status
         ? `${API_BASE_URL}/contacts?status=${status}&limit=100`
