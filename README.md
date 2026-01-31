@@ -89,16 +89,86 @@ STRIPE_WEBHOOK_SECRET=...
 ## 🚀 Deployment
 
 ### Frontend (Vercel)
-The `web/` directory is ready for Vercel.
-- **Build Command**: `next build`
-- **Output Directory**: `.next`
-- **Env**: Set `NEXT_PUBLIC_API_URL` to your backend URL.
 
-### Backend (Render/Railway)
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
-- **Database**: Switch `DATABASE_URL` to PostgreSQL.
-- **Rate limiting**: Per-IP limits apply to `/api/draft`, `/api/send/{id}`, and `/api/send-all` (20 requests/minute each) to reduce abuse.
+The `web/` directory is ready for Vercel deployment.
+
+1. **Connect to Vercel**: Link your repository and select the `web/` directory
+2. **Build Settings**:
+   - Build Command: `npm run build`
+   - Output Directory: `.next`
+   - Install Command: `npm install`
+3. **Environment Variables**:
+   | Variable | Value |
+   |----------|-------|
+   | `NEXT_PUBLIC_API_URL` | Your backend URL (e.g., `https://api.outreachpro.io`) |
+
+### Backend (Railway — Recommended)
+
+1. **Create a new Railway project** and connect your GitHub repository
+2. **Add PostgreSQL**: Click "New" → "Database" → "PostgreSQL"
+3. **Copy `DATABASE_URL`** from the PostgreSQL service to your app's environment
+4. **Set all required environment variables**:
+
+   | Variable | Required | Description |
+   |----------|----------|-------------|
+   | `PORT` | ✅ Auto-set | Railway sets this automatically |
+   | `DATABASE_URL` | ✅ | PostgreSQL connection string |
+   | `SECRET_KEY` | ✅ | Session encryption (run `openssl rand -hex 32`) |
+   | `JWT_SECRET` | ✅ | JWT signing key (run `openssl rand -hex 32`) |
+   | `SESSION_SECRET` | ✅ | OAuth session key (run `openssl rand -hex 32`) |
+   | `FRONTEND_URL` | ✅ | Your frontend URL (e.g., `https://outreachpro.io`) |
+   | `GOOGLE_CLIENT_ID` | ✅ | OAuth Client ID from Google Cloud Console |
+   | `GOOGLE_CLIENT_SECRET` | ✅ | OAuth Client Secret |
+   | `GEMINI_API_KEY` | ✅ | API key from [AI Studio](https://aistudio.google.com/apikey) |
+   | `STRIPE_SECRET_KEY` | ✅ | Stripe Secret Key (use `sk_live_` for production) |
+   | `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe Webhook signing secret |
+
+5. **Deploy**: Railway auto-deploys on push. Verify with:
+   ```bash
+   curl https://your-railway-app.up.railway.app/health
+   ```
+
+### Backend (Render — Alternative)
+
+1. Create a new **Web Service** on Render
+2. Connect your repository and set:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+3. Add a **PostgreSQL** database and link it
+4. Set all environment variables (same as Railway table above)
+
+### Stripe Webhook Setup (Production)
+
+1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
+2. Click **"Add endpoint"**
+3. Set **Endpoint URL**: `https://api.yourdomain.com/api/stripe/webhook`
+4. Select event: `checkout.session.completed`
+5. Copy the **Signing secret** → set as `STRIPE_WEBHOOK_SECRET`
+
+### Google OAuth Setup (Production)
+
+1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+2. Edit your OAuth 2.0 Client ID
+3. Add **Authorized redirect URI**: `https://api.yourdomain.com/api/auth/callback`
+4. Update **OAuth consent screen**:
+   - Add Privacy Policy URL: `https://yourdomain.com/privacy`
+   - Add Terms of Service URL: `https://yourdomain.com/terms`
+5. If using "External" user type, submit for verification or add test users
+
+### Rate Limiting
+
+Per-IP rate limits are enabled on sensitive endpoints:
+- `/api/draft`: 20 requests/minute
+- `/api/send/{id}`: 20 requests/minute
+- `/api/send-all`: 20 requests/minute
+
+### Health Check
+
+Verify your backend is running:
+```bash
+curl https://api.yourdomain.com/health
+# Expected: {"status":"ok","database":"connected","timestamp":"..."}
+```
 
 ---
 
