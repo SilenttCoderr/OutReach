@@ -18,7 +18,8 @@ def migrate():
     new_columns = {
         "access_token": "TEXT",
         "refresh_token": "TEXT",
-        "token_expiry": "TIMESTAMP"
+        "token_expiry": "TIMESTAMP",
+        "password_hash": "VARCHAR(255)",
     }
     
     for col, dtype in new_columns.items():

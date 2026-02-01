@@ -15,7 +15,8 @@ class User(Base):
     name = Column(String(255), nullable=True)
     picture = Column(String(512), nullable=True)  # Google profile picture URL
     google_id = Column(String(255), unique=True, nullable=True)
-    
+    password_hash = Column(String(255), nullable=True)  # For email/password auth; null for Google-only users
+
     # OAuth Credentials
     access_token = Column(Text, nullable=True)
     refresh_token = Column(Text, nullable=True)

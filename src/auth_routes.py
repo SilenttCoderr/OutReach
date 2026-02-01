@@ -1,10 +1,10 @@
 """Authentication API routes."""
 
 import os
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from starlette.config import Config
 
 from src.database import get_db
 from src.models import User
@@ -14,12 +14,65 @@ from src.auth import (
     get_current_user,
     require_auth,
     get_or_create_user,
+    hash_password,
+    verify_password,
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # Frontend URL for redirects
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    name: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/register")
+def register(body: RegisterRequest, db: Session = Depends(get_db)):
+    """Register with email and password. Returns JWT on success."""
+    existing = db.query(User).filter(User.email == body.email.strip().lower()).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+    user = User(
+        email=body.email.strip().lower(),
+        name=body.name.strip() or None,
+        password_hash=hash_password(body.password),
+        credits=10,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    token = create_access_token(data={"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/login")
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    """Login with email and password. Returns JWT on success. Google-only users have no password."""
+    user = db.query(User).filter(User.email == body.email.strip().lower()).first()
+    if not user or not user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+    if not verify_password(body.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+    token = create_access_token(data={"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @router.get("/google")

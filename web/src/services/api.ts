@@ -65,6 +65,41 @@ export async function uploadCSV(file: File): Promise<any> {
     return res.json();
 }
 
+export interface AuthTokenResponse {
+    access_token: string;
+    token_type: string;
+}
+
+export async function loginWithEmail(email: string, password: string): Promise<AuthTokenResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Invalid email or password");
+    }
+    return res.json();
+}
+
+export async function registerWithEmail(name: string, email: string, password: string): Promise<AuthTokenResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            password,
+        }),
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Registration failed");
+    }
+    return res.json();
+}
+
 export async function checkAuthStatus(): Promise<{ authenticated: boolean; email?: string; credits?: number }> {
     try {
         const headers = getAuthHeader();

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth
+from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
@@ -12,6 +13,20 @@ from sqlalchemy.orm import Session
 
 from src.database import get_db
 from src.models import User
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def hash_password(password: str) -> str:
+    """Hash a password with bcrypt."""
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed: str) -> bool:
+    """Verify a password against its hash."""
+    return pwd_context.verify(plain_password, hashed)
+
 
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")

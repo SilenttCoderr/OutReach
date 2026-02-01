@@ -39,16 +39,18 @@ isProject: false
 
 ## To-do / Completed (in order)
 
-- **T1** Railway deployment fixes (Backend/Deploy)
-- **T2** Stats API contract – backend (Backend/Deploy)
-- **T3** Health check endpoint (Backend/Deploy)
-- **T4** Optional: rate limiting (Backend/Deploy)
-- **T5** File structure cleanup (Repo/Structure)
-- **T6** Dashboard stats – frontend (Frontend; do after T2)
-- **T7** OAuth URL – login/signup (Frontend)
-- **T8** Legal pages – Privacy, Terms (Frontend)
-- **T9** Production env and deployment docs (Docs/Config)
-- **T10** Launch checklist (Docs/Config)
+- [x] **T1** Railway deployment fixes (Backend/Deploy)
+- [x] **T2** Stats API contract – backend (Backend/Deploy)
+- [x] **T3** Health check endpoint (Backend/Deploy)
+- [x] **T4** Optional: rate limiting (Backend/Deploy)
+- [x] **T5** File structure cleanup (Repo/Structure)
+- [x] **T6** Dashboard stats – frontend (Frontend; do after T2)
+- [x] **T7** OAuth URL – login/signup (Frontend)
+- [x] **T8** Legal pages – Privacy, Terms (Frontend)
+- [x] **T9** Production env and deployment docs (Docs/Config)
+- [x] **T10** Launch checklist (Docs/Config)
+
+**Current state (updated):** All 10 tasks are implemented. Backend: `python-jose`, `slowapi`, `boto3` in requirements; PORT from env in `app.py`; Procfile and Dockerfile CMD with shell for `$PORT`; `/api/stats` returns `credits_available`, `total_sent`, `total_drafted`, `pending`, `failed_emails`; `GET /health` with DB check; rate limits 20/min on draft and send. Frontend: login/signup use `NEXT_PUBLIC_API_URL` for OAuth; api.ts Stats matches backend; `/privacy` and `/terms` pages; footer links updated. Repo: `.dockerignore` includes `data/`, `.agent/`, `design-system/`, `static/`, `scripts/`; root scripts moved to `scripts/` (migrate_db.py also kept at root). Docs: `.env.example` and README deployment section cover Railway, env vars, Stripe/Google OAuth; `docs/LAUNCH_CHECKLIST.md` exists.
 
 ## Codebase summary
 

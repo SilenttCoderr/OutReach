@@ -1,12 +1,43 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { MoveLeft, Zap, Check } from "lucide-react";
+import { registerWithEmail } from "@/services/api";
 
 export default function SignUpPage() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
     const handleGoogleSignup = () => {
         const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
         window.location.href = base ? `${base}/api/auth/google` : "/api/auth/google";
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!name.trim() || !email.trim() || !password) {
+            setError("Please fill in all fields.");
+            return;
+        }
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters.");
+            return;
+        }
+        setLoading(true);
+        try {
+            const { access_token } = await registerWithEmail(name, email, password);
+            localStorage.setItem("token", access_token);
+            window.location.assign("/dashboard");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Registration failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -87,14 +118,23 @@ export default function SignUpPage() {
                     </div>
 
                     {/* Form */}
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        {error && (
+                            <p className="text-sm text-red-500 bg-red-500/10 px-3 py-2 rounded-lg" role="alert">
+                                {error}
+                            </p>
+                        )}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-text-primary" htmlFor="name">Full Name</label>
                             <input
                                 id="name"
                                 type="text"
+                                autoComplete="name"
+                                value={name}
+                                onChange={(e) => { setName(e.target.value); setError(null); }}
                                 className="input h-11"
                                 placeholder="John Smith"
+                                required
                             />
                         </div>
                         <div className="space-y-2">
@@ -102,8 +142,12 @@ export default function SignUpPage() {
                             <input
                                 id="email"
                                 type="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => { setEmail(e.target.value); setError(null); }}
                                 className="input h-11"
                                 placeholder="name@company.com"
+                                required
                             />
                         </div>
                         <div className="space-y-2">
@@ -111,12 +155,17 @@ export default function SignUpPage() {
                             <input
                                 id="password"
                                 type="password"
+                                autoComplete="new-password"
+                                value={password}
+                                onChange={(e) => { setPassword(e.target.value); setError(null); }}
                                 className="input h-11"
                                 placeholder="8+ characters"
+                                minLength={8}
+                                required
                             />
                         </div>
-                        <button type="submit" className="btn-primary w-full h-11">
-                            Create Account
+                        <button type="submit" className="btn-primary w-full h-11" disabled={loading}>
+                            {loading ? "Creating account…" : "Create Account"}
                         </button>
                     </form>
 

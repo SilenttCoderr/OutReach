@@ -41,12 +41,13 @@ app.add_middleware(
 )
 
 
-# CORS configuration
+# CORS configuration: FRONTEND_URL + optional FRONTEND_URL_EXTRA (e.g. Vercel URL + custom domain)
+_extra = os.getenv("FRONTEND_URL_EXTRA", "")
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     os.getenv("FRONTEND_URL", ""),
-]
+] + [o.strip() for o in _extra.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,

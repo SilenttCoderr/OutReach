@@ -1,12 +1,38 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { MoveLeft, Zap } from "lucide-react";
+import { loginWithEmail } from "@/services/api";
 
 export default function LoginPage() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
     const handleGoogleLogin = () => {
         const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
         window.location.href = base ? `${base}/api/auth/google` : "/api/auth/google";
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!email.trim() || !password) {
+            setError("Please enter email and password.");
+            return;
+        }
+        setLoading(true);
+        try {
+            const { access_token } = await loginWithEmail(email, password);
+            localStorage.setItem("token", access_token);
+            window.location.assign("/dashboard");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Invalid email or password");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -68,14 +94,23 @@ export default function LoginPage() {
                     </div>
 
                     {/* Form */}
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        {error && (
+                            <p className="text-sm text-red-500 bg-red-500/10 px-3 py-2 rounded-lg" role="alert">
+                                {error}
+                            </p>
+                        )}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-text-primary" htmlFor="email">Email</label>
                             <input
                                 id="email"
                                 type="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => { setEmail(e.target.value); setError(null); }}
                                 className="input h-11"
                                 placeholder="name@company.com"
+                                required
                             />
                         </div>
                         <div className="space-y-2">
@@ -86,11 +121,15 @@ export default function LoginPage() {
                             <input
                                 id="password"
                                 type="password"
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => { setPassword(e.target.value); setError(null); }}
                                 className="input h-11"
+                                required
                             />
                         </div>
-                        <button type="submit" className="btn-primary w-full h-11">
-                            Sign In
+                        <button type="submit" className="btn-primary w-full h-11" disabled={loading}>
+                            {loading ? "Signing in…" : "Sign In"}
                         </button>
                     </form>
 

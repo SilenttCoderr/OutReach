@@ -15,8 +15,8 @@ function AuthCallback() {
         if (token) {
             // Store token
             localStorage.setItem("token", token);
-            // Redirect to dashboard
-            router.push("/dashboard");
+            // Full page navigation so dashboard loads with token visible (fixes redirect-to-login race)
+            window.location.assign("/dashboard");
         } else if (error) {
             // Redirect to login with error
             router.push(`/login?error=${encodeURIComponent(error)}`);
