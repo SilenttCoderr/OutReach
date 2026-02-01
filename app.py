@@ -69,8 +69,25 @@ gmail_client: Optional[GmailClient] = None # type: ignore
 # Database table creation on startup
 @app.on_event("startup")
 async def startup():
-    """Create database tables on startup."""
+    """Create database tables on startup and run migrations."""
     Base.metadata.create_all(bind=engine)
+
+    # Migration: Add password_hash column if missing (for Render free tier)
+    from sqlalchemy import inspect, text
+
+    try:
+        inspector = inspect(engine)
+        columns = [col["name"] for col in inspector.get_columns("users")]
+        if "password_hash" not in columns:
+            print("Adding password_hash column to users table...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+                conn.commit()
+            print("Password hash column added successfully.")
+        else:
+            print("Password hash column already exists.")
+    except Exception as e:
+        print(f"Migration check: {e}")
 
 
 @app.get("/health")
