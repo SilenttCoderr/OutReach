@@ -10,7 +10,8 @@ This roadmap upgrades OutreachPro from a fast-moving brownfield codebase to a pr
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Baseline and Deployment Contracts** - Establish production baselines, env contracts, and target clean architecture boundaries.
+- [x] **Phase 1: Baseline and Deployment Contracts** - Establish production baselines, env contracts, and target clean architecture boundaries.
+ (completed 2026-03-31)
 - [ ] **Phase 2: Backend Modularization Pass** - Decompose `app.py` orchestration into modular service and router layers.
 - [ ] **Phase 3: Data and Pipeline Cohesion** - Unify tracking/state flows and stabilize send pipeline behavior.
 - [ ] **Phase 4: Security and Auth Hardening** - Harden token, secret, OAuth, and auth endpoint behavior.
@@ -31,9 +32,9 @@ This roadmap upgrades OutreachPro from a fast-moving brownfield codebase to a pr
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Capture baseline architecture and runtime contracts
-- [ ] 01-02: Implement env/dependency preflight checks
-- [ ] 01-03: Align deployment config and ignore/build hygiene
+- [x] 01-01: Capture baseline architecture and runtime contracts
+- [x] 01-02: Implement env/dependency preflight checks
+- [x] 01-03: Align deployment config and ignore/build hygiene
 
 ### Phase 2: Backend Modularization Pass
 **Goal**: Move orchestration out of `app.py` into modular routers/services while preserving API behavior.
@@ -115,7 +116,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Baseline and Deployment Contracts | 0/3 | Not started | - |
+| 1. Baseline and Deployment Contracts | 3/3 | Complete    | 2026-03-31 |
 | 2. Backend Modularization Pass | 0/3 | Not started | - |
 | 3. Data and Pipeline Cohesion | 0/2 | Not started | - |
 | 4. Security and Auth Hardening | 0/3 | Not started | - |
