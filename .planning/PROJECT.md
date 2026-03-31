@@ -36,6 +36,7 @@ Users can reliably run end-to-end outreach campaigns in production without auth,
 - Current system is brownfield with working behavior concentrated in `app.py` and service modules under `src/`.
 - Frontend and backend are deployed separately (`web/` to Vercel, root API to Render).
 - Existing codebase map now lives in `.planning/codebase/*.md` and should be treated as canonical for this milestone.
+- Contract reference: `docs/ARCHITECTURE_CONTRACT.md` is the source of truth for clean-layer dependency rules.
 - There is known architectural drift from rapid iteration:
   - large backend entrypoint
   - mixed legacy/modern flows
