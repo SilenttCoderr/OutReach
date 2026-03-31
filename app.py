@@ -24,6 +24,7 @@ from src.email_generator import EmailGenerator
 from src.tracker import EmailTracker
 from src.gmail_client import GmailClient
 from src.database import engine, Base
+from src.config import validate_startup_configuration
 from src.auth_routes import router as auth_router
 from src.stripe_routes import router as stripe_router
 
@@ -70,6 +71,7 @@ gmail_client: Optional[GmailClient] = None # type: ignore
 @app.on_event("startup")
 async def startup():
     """Create database tables on startup and run migrations."""
+    validate_startup_configuration()
     Base.metadata.create_all(bind=engine)
 
     # Migration: Add password_hash column if missing (for Render free tier)
@@ -136,7 +138,7 @@ async def root():
 
 from sqlalchemy.orm import Session
 from src.database import get_db
-from src.auth import require_auth
+from src.auth import require_auth, get_current_user
 from src.models import User, Contact, EmailLog
 
 @app.get("/api/stats")
@@ -333,11 +335,17 @@ async def preview_emails(limit: int = 5, use_llm: bool = False, user: User = Dep
 
 
 @app.get("/api/auth/status")
-async def auth_status(user: User = Depends(require_auth)):
-    """Check if User has Gmail connected."""
-    if user and user.access_token:
-        return {"authenticated": True, "email": user.email}
-    return {"authenticated": False}
+async def auth_status(user: Optional[User] = Depends(get_current_user)):
+    """Check authentication status and Gmail connection state."""
+    if not user:
+        return {"authenticated": False}
+
+    return {
+        "authenticated": True,
+        "email": user.email,
+        "credits": user.credits,
+        "gmail_connected": bool(user.access_token),
+    }
 
 
 @app.post("/api/draft")
