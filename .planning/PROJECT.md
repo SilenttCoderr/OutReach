@@ -37,6 +37,7 @@ Users can reliably run end-to-end outreach campaigns in production without auth,
 - Frontend and backend are deployed separately (`web/` to Vercel, root API to Render).
 - Existing codebase map now lives in `.planning/codebase/*.md` and should be treated as canonical for this milestone.
 - Contract reference: `docs/ARCHITECTURE_CONTRACT.md` is the source of truth for clean-layer dependency rules.
+- Phase 1 completed baseline hardening artifacts: architecture contract, deployment contract, and startup preflight checks.
 - There is known architectural drift from rapid iteration:
   - large backend entrypoint
   - mixed legacy/modern flows
@@ -76,4 +77,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after initialization*
+*Last updated: 2026-03-31 after Phase 1 completion*
