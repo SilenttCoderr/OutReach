@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // Remove hardcoded localhost rewrite for production
-  // In production, use NEXT_PUBLIC_API_URL environment variable instead
+  // Contract: local-only API rewrite. Preview/prod must use NEXT_PUBLIC_API_URL.
   async rewrites() {
-    // Only add rewrite for development when API_URL is not set
+    // When NEXT_PUBLIC_API_URL is absent, default to local backend for development.
     if (!process.env.NEXT_PUBLIC_API_URL) {
       return [
         {

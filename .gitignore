@@ -58,6 +58,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Runtime artifacts
+uploads/
+cold_outreach.db
+
 # Secrets
 token.json
 credentials.json
