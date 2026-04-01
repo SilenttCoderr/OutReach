@@ -2,6 +2,7 @@ services:
   # The FastAPI Backend Web Service
   - type: web
     name: outreachpro-api
+    plan: free
     runtime: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn app:app --host 0.0.0.0 --port $PORT"
