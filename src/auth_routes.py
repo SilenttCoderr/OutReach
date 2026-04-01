@@ -78,7 +78,11 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/google")
 async def google_login(request: Request):
     """Initiate Google OAuth flow."""
-    redirect_uri = request.url_for("google_callback")
+    redirect_uri = str(request.url_for("google_callback"))
+    # Force HTTPS when running in production (behind Render's proxy)
+    if FRONTEND_URL.startswith("https://") and redirect_uri.startswith("http://"):
+        redirect_uri = redirect_uri.replace("http://", "https://", 1)
+    
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
