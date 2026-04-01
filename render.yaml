@@ -29,8 +29,8 @@ services:
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
 
+databases:
   # The PostgreSQL Database instance
-  - type: psql
-    name: outreachpro-db
+  - name: outreachpro-db
     plan: free
     postgresMajorVersion: 15
