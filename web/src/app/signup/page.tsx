@@ -13,8 +13,9 @@ export default function SignUpPage() {
     const [loading, setLoading] = useState(false);
 
     const handleGoogleSignup = () => {
-        const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-        window.location.href = base ? `${base}/api/auth/google` : "/api/auth/google";
+        const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+        const apiOrigin = rawApiUrl.endsWith("/api") ? rawApiUrl.slice(0, -4) : rawApiUrl;
+        window.location.href = `${apiOrigin}/api/auth/google`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

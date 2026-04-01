@@ -1,4 +1,10 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+
+// Backend endpoints are mounted under /api in FastAPI.
+// Accept NEXT_PUBLIC_API_URL as either https://host or https://host/api.
+export const API_BASE_URL = rawApiUrl
+    ? (rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`)
+    : "/api";
 
 function getAuthHeader() {
     const token = localStorage.getItem("token");
@@ -235,4 +241,72 @@ export async function sendAllDrafts(delaySeconds: number = 30): Promise<{ queued
 export function logout() {
     localStorage.removeItem("token");
     window.location.href = "/login";
+}
+
+export interface UserProfile {
+    id?: number;
+    full_name: string;
+    current_title: string;
+    current_company: string;
+    degree: string;
+    university: string;
+    experience_summary: string;
+    skills: string[];
+    key_highlights: string[];
+    email_sign_off: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export async function fetchProfile(): Promise<UserProfile> {
+    const headers = getAuthHeader();
+    const res = await fetch(`${API_BASE_URL}/profile`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...headers,
+        } as any,
+    });
+
+    if (res.status === 401) {
+        window.location.href = "/login";
+        throw new Error("Unauthorized");
+    }
+    
+    // It's normal for 404 if profile doesn't exist yet
+    if (res.status === 404) {
+        return {
+            full_name: "",
+            current_title: "",
+            current_company: "",
+            degree: "",
+            university: "",
+            experience_summary: "",
+            skills: [],
+            key_highlights: [],
+            email_sign_off: "Best regards,"
+        };
+    }
+
+    if (!res.ok) throw new Error("Failed to fetch profile");
+    return res.json();
+}
+
+export async function upsertProfile(profile: Partial<UserProfile>): Promise<UserProfile> {
+    const headers = getAuthHeader();
+    const res = await fetch(`${API_BASE_URL}/profile`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...headers,
+        } as any,
+        body: JSON.stringify(profile),
+    });
+
+    if (res.status === 401) {
+        window.location.href = "/login";
+        throw new Error("Unauthorized");
+    }
+
+    if (!res.ok) throw new Error("Failed to save profile");
+    return res.json();
 }

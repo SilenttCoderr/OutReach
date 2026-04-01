@@ -12,14 +12,9 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     const handleGoogleLogin = () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            console.error("NEXT_PUBLIC_API_URL is not set!");
-            setError("Configuration error: API URL not set");
-            return;
-        }
-        const base = apiUrl.replace(/\/$/, "");
-        window.location.href = `${base}/api/auth/google`;
+        const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+        const apiOrigin = rawApiUrl.endsWith("/api") ? rawApiUrl.slice(0, -4) : rawApiUrl;
+        window.location.href = `${apiOrigin}/api/auth/google`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

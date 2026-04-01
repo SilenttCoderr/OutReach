@@ -10,7 +10,8 @@ import {
     Settings,
     FileText,
     LogOut,
-    Zap
+    Zap,
+    UserCircle
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
     { href: "/dashboard/campaigns", label: "Campaigns", icon: Send },
     { href: "/dashboard/drafts", label: "Drafts", icon: Mail },
     { href: "/dashboard/templates", label: "Templates", icon: FileText },
+    { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -26,6 +28,7 @@ export function Sidebar() {
     const pathname = usePathname();
 
     const handleLogout = () => {
+        localStorage.removeItem("token");
         localStorage.removeItem("access_token");
         window.location.href = "/login";
     };

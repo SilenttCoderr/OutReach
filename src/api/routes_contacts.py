@@ -6,9 +6,9 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from src.application import contact_service
 from src.api.dependencies import UPLOAD_DIR, get_authenticated_user, get_db_session
-from src.data_processor import DataProcessor
-from src.models import Contact, User
+from src.models import User
 from src.storage import upload_file
 
 router = APIRouter(tags=["Contacts"])
@@ -22,22 +22,7 @@ async def get_contacts(
     db: Session = Depends(get_db_session),
 ):
     """Get authenticated user's contacts from database."""
-    query = db.query(Contact).filter(Contact.user_id == user.id)
-    if status:
-        query = query.filter(Contact.status == status)
-    contacts = query.order_by(Contact.created_at.desc()).limit(limit).all()
-    return [
-        {
-            "id": contact.id,
-            "name": contact.name,
-            "email": contact.email,
-            "company": contact.company,
-            "role": contact.role,
-            "status": contact.status,
-            "created_at": contact.created_at.isoformat() if contact.created_at else None,
-        }
-        for contact in contacts
-    ]
+    return contact_service.get_contacts(db, user.id, status=status, limit=limit)
 
 
 @router.post("/upload")
@@ -69,40 +54,12 @@ async def upload_csv(
     background_tasks.add_task(backup_to_r2, str(file_path), object_name)
 
     try:
-        processor = DataProcessor()
-        recruiters = processor.load(str(file_path))
-
-        count_new = 0
-        count_existing = 0
-        for recruiter in recruiters:
-            email = recruiter.get("recruiter_email")
-            existing = (
-                db.query(Contact)
-                .filter(Contact.user_id == user.id, Contact.email == email)
-                .first()
-            )
-
-            if not existing:
-                contact = Contact(
-                    user_id=user.id,
-                    name=recruiter.get("recruiter_name"),
-                    email=email,
-                    company=recruiter.get("company"),
-                    role=recruiter.get("role"),
-                    status="new",
-                )
-                db.add(contact)
-                count_new += 1
-            else:
-                count_existing += 1
-
-        db.commit()
+        result = contact_service.process_uploaded_contacts(db, user, str(file_path))
         return {
             "filename": file.filename,
-            "total_contacts": len(recruiters),
-            "new_added": count_new,
-            "already_exists": count_existing,
+            "total_contacts": result["total_contacts"],
+            "new_added": result["new_added"],
+            "already_exists": result["already_exists"],
         }
     except Exception as exc:
-        db.rollback()
         raise HTTPException(status_code=400, detail=f"Processing Error: {str(exc)}")

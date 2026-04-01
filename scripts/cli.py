@@ -21,6 +21,7 @@ from src.email_generator import EmailGenerator
 from src.tracker import EmailTracker
 from src.gmail_client import GmailClient
 from src.utils import load_env
+import json
 
 
 def get_generator(use_llm: bool = False):
@@ -29,6 +30,18 @@ def get_generator(use_llm: bool = False):
         from src.llm_generator import LLMEmailGenerator
         return LLMEmailGenerator()
     return EmailGenerator()
+
+
+def load_profile(profile_path: str) -> dict:
+    import json
+    path = Path(profile_path)
+    if not path.exists():
+        console.print(f"[red]Error: Profile file '{profile_path}' not found.[/red]")
+        console.print("Please copy config/profile.json.example to config/profile.json and edit it with your details.")
+        sys.exit(1)
+    
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 
 console = Console()
@@ -44,9 +57,10 @@ def cli():
 @cli.command()
 @click.option('--input', '-i', 'input_file', required=True, help='Path to CSV/JSON file with recruiter data')
 @click.option('--template', '-t', default='professional', help='Email template (professional/concise)')
+@click.option('--profile', '-p', 'profile_path', default='config/profile.json', help='Path to user profile JSON')
 @click.option('--limit', '-l', default=None, type=int, help='Limit number of emails to preview')
 @click.option('--llm', is_flag=True, help='Use Gemini LLM for personalized generation')
-def preview(input_file: str, template: str, limit: int, llm: bool):
+def preview(input_file: str, template: str, profile_path: str, limit: int, llm: bool):
     """Preview generated emails without sending."""
     mode_text = "🤖 LLM Preview Mode" if llm else "📧 Email Preview Mode"
     console.print(Panel.fit(mode_text, style="bold blue"))
@@ -54,6 +68,7 @@ def preview(input_file: str, template: str, limit: int, llm: bool):
     # Load data
     processor = DataProcessor()
     recruiters = processor.load(input_file)
+    user_profile = load_profile(profile_path)
     
     if limit:
         recruiters = recruiters[:limit]
@@ -73,7 +88,11 @@ def preview(input_file: str, template: str, limit: int, llm: bool):
     generator = get_generator(use_llm=llm)
     
     for i, recruiter in enumerate(recruiters, 1):
-        preview = generator.preview_email(recruiter, template)
+        if llm:
+            preview = generator.preview_email(recruiter, user_profile, template)
+        else:
+             preview = generator.preview_email(recruiter, template)
+             
         console.print(f"\n[bold cyan]Email {i}/{len(recruiters)}[/bold cyan]")
         console.print(preview)
         
@@ -85,9 +104,10 @@ def preview(input_file: str, template: str, limit: int, llm: bool):
 @cli.command()
 @click.option('--input', '-i', 'input_file', required=True, help='Path to CSV/JSON file')
 @click.option('--template', '-t', default='professional', help='Email template')
+@click.option('--profile', '-p', 'profile_path', default='config/profile.json', help='Path to user profile JSON')
 @click.option('--attachment', '-a', default=None, help='Path to resume attachment')
 @click.option('--llm', is_flag=True, help='Use Gemini LLM for personalized generation')
-def draft(input_file: str, template: str, attachment: str, llm: bool):
+def draft(input_file: str, template: str, profile_path: str, attachment: str, llm: bool):
     """Create Gmail drafts for review before sending."""
     mode_text = "🤖 LLM Draft Mode" if llm else "📝 Draft Creation Mode"
     console.print(Panel.fit(mode_text, style="bold yellow"))
@@ -95,6 +115,7 @@ def draft(input_file: str, template: str, attachment: str, llm: bool):
     # Load and process
     processor = DataProcessor()
     recruiters = processor.load(input_file)
+    user_profile = load_profile(profile_path)
     
     tracker = EmailTracker()
     recruiters = tracker.filter_unsent(recruiters)
@@ -125,7 +146,11 @@ def draft(input_file: str, template: str, attachment: str, llm: bool):
         console.print(f"[{i}/{len(recruiters)}] {recruiter.get('company')}...")
         
         try:
-            result = generator.generate(recruiter, template)
+            if llm:
+                result = generator.generate(recruiter, user_profile, template)
+            else:
+                 result = generator.generate(recruiter, template)
+                 
             subject = result["subject"]
             body = result["body"]
             draft_result = gmail.create_draft(
@@ -154,10 +179,12 @@ def draft(input_file: str, template: str, attachment: str, llm: bool):
 @cli.command()
 @click.option('--input', '-i', 'input_file', required=True, help='Path to CSV/JSON file')
 @click.option('--template', '-t', default='professional', help='Email template')
+@click.option('--profile', '-p', 'profile_path', default='config/profile.json', help='Path to user profile JSON')
 @click.option('--delay', '-d', default=30, type=int, help='Delay between emails (seconds)')
 @click.option('--attachment', '-a', default=None, help='Path to resume attachment')
 @click.option('--dry-run', is_flag=True, help='Simulate without sending')
-def send(input_file: str, template: str, delay: int, attachment: str, dry_run: bool):
+@click.option('--llm', is_flag=True, help='Use Gemini LLM for personalized generation')
+def send(input_file: str, template: str, profile_path: str, delay: int, attachment: str, dry_run: bool, llm: bool):
     """Send emails directly with rate limiting."""
     mode = "DRY RUN" if dry_run else "SEND"
     console.print(Panel.fit(f"🚀 {mode} Mode", style="bold green" if not dry_run else "bold magenta"))
@@ -165,6 +192,7 @@ def send(input_file: str, template: str, delay: int, attachment: str, dry_run: b
     # Load and process
     processor = DataProcessor()
     recruiters = processor.load(input_file)
+    user_profile = load_profile(profile_path)
     
     tracker = EmailTracker()
     recruiters = tracker.filter_unsent(recruiters)
@@ -183,7 +211,7 @@ def send(input_file: str, template: str, delay: int, attachment: str, dry_run: b
             return
     
     # Generate and send
-    generator = EmailGenerator()
+    generator = get_generator(use_llm=llm)
     gmail = GmailClient()
     
     if not dry_run and not gmail.authenticate():
@@ -197,7 +225,11 @@ def send(input_file: str, template: str, delay: int, attachment: str, dry_run: b
         console.print(f"[{i}/{len(recruiters)}] {recruiter.get('company')} - {recruiter.get('recruiter_email')}")
         
         try:
-            result = generator.generate(recruiter, template)
+            if llm:
+                result = generator.generate(recruiter, user_profile, template)
+            else:
+                 result = generator.generate(recruiter, template)
+                 
             subject = result["subject"]
             body = result["body"]
             

@@ -66,8 +66,36 @@ function DashboardContent() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            <div className="page-container animate-in">
+                <div className="section-header flex items-center justify-between">
+                    <div>
+                        <div className="h-8 w-48 bg-bg-elevated rounded animate-pulse mb-2"></div>
+                        <div className="h-4 w-64 bg-bg-elevated rounded animate-pulse"></div>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="stat-card h-32 animate-pulse bg-bg-surface border-border flex flex-col justify-between">
+                            <div className="w-8 h-8 bg-bg-elevated rounded-lg"></div>
+                            <div>
+                                <div className="h-8 w-16 bg-bg-elevated rounded mb-2"></div>
+                                <div className="h-4 w-24 bg-bg-elevated rounded"></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="grid md:grid-cols-2 gap-4 mb-8">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="card p-6 h-36 border-border animate-pulse flex items-start gap-4">
+                            <div className="w-12 h-12 bg-bg-elevated rounded-xl"></div>
+                            <div className="flex-1 space-y-3">
+                                <div className="h-5 w-32 bg-bg-elevated rounded"></div>
+                                <div className="h-4 w-full max-w-[200px] bg-bg-elevated rounded"></div>
+                                <div className="h-8 w-24 bg-bg-elevated rounded mt-2"></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -151,8 +179,15 @@ function DashboardContent() {
                         View all <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
-                <div className="text-text-muted text-sm py-8 text-center border border-dashed border-border rounded-lg">
-                    No recent activity. Start by importing contacts.
+                <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-lg bg-bg-base/50">
+                    <div className="w-12 h-12 rounded-full bg-bg-elevated flex items-center justify-center mb-4">
+                        <Upload className="w-6 h-6 text-text-muted" />
+                    </div>
+                    <h3 className="text-text-primary font-medium mb-1">No recent activity</h3>
+                    <p className="text-text-muted text-sm mb-4">Start your cold outreach by importing your contact list.</p>
+                    <Link href="/dashboard/contacts" className="btn-primary text-sm">
+                        Import Contacts
+                    </Link>
                 </div>
             </div>
         </div>

@@ -1,10 +1,10 @@
-Subject: GenAI Intern @ Motilal Oswal - Interested in AI/ML Roles at {{ company }}
+Subject: {{ current_title }} @ {{ current_company }} - Opportunities at {{ company }}
 
 Hi {{ recruiter_name.split()[0] }},
 
-I'm a final-year CS student at Bennett University with 6+ months experience as a GenAI Intern at Motilal Oswal, where I built production RAG systems and multi-agent architectures using LangChain and Claude. I'm interested in AI/ML opportunities at {{ company }} because of my focus on building practical AI solutions.
+I'm a {{ degree }} student at {{ university }} with experience as a {{ current_title }} at {{ current_company }}, where {{ experience_summary }}. I'm interested in opportunities at {{ company }}.
 
 How can I start the interview process?
 
-Best,
-Ansh Agrawal
+{{ email_sign_off }},
+{{ full_name }}

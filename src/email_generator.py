@@ -12,9 +12,8 @@ import json
 class EmailGenerator:
     """Generates personalized emails from templates."""
     
-    def __init__(self, templates_dir: str = "templates", profile_path: str = "config/profile.json"):
+    def __init__(self, templates_dir: str = "templates"):
         self.templates_dir = Path(templates_dir)
-        self.profile = self._load_profile(profile_path)
         
         # Set up Jinja2 environment
         self.env = Environment(
@@ -23,10 +22,7 @@ class EmailGenerator:
             lstrip_blocks=True
         )
     
-    def _load_profile(self, profile_path: str) -> Dict:
-        """Load user profile from JSON."""
-        with open(profile_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+
     
     def get_available_templates(self) -> list:
         """List available email templates."""
@@ -38,6 +34,7 @@ class EmailGenerator:
     def generate(
         self,
         recruiter: Dict,
+        user_profile: Dict = None,
         template_name: str = "professional",
         custom_note: Optional[str] = None,
         has_attachments: bool = False
@@ -47,6 +44,7 @@ class EmailGenerator:
         
         Args:
             recruiter: Dict with recruiter_name, recruiter_email, company, role, etc.
+            user_profile: Dict with the user's profile info.
             template_name: Name of template file (without .txt)
             custom_note: Optional custom note to include
             has_attachments: Whether attachments are being added
@@ -69,7 +67,7 @@ class EmailGenerator:
             "role": recruiter.get("role", "AI/ML"),
             "company_type": recruiter.get("company_type", ""),
             "company_note": custom_note or recruiter.get("notes", ""),
-            **self.profile  # Include all profile data
+            **(user_profile or {})  # Include all profile data
         }
         
         # Render template
@@ -97,6 +95,7 @@ class EmailGenerator:
     def generate_batch(
         self,
         recruiters: list,
+        user_profile: Dict = None,
         template_name: str = "professional"
     ) -> list:
         """
@@ -109,7 +108,7 @@ class EmailGenerator:
         
         for recruiter in recruiters:
             try:
-                result = self.generate(recruiter, template_name)
+                result = self.generate(recruiter, user_profile, template_name)
                 results.append({
                     "recruiter": recruiter,
                     "subject": result["subject"],
@@ -127,9 +126,9 @@ class EmailGenerator:
         
         return results
     
-    def preview_email(self, recruiter: Dict, template_name: str = "professional") -> str:
+    def preview_email(self, recruiter: Dict, user_profile: Dict = None, template_name: str = "professional") -> str:
         """Generate a formatted preview of the email."""
-        result = self.generate(recruiter, template_name)
+        result = self.generate(recruiter, user_profile, template_name)
         subject = result["subject"]
         body = result["body"]
         

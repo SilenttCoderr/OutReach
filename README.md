@@ -176,6 +176,7 @@ curl https://api.yourdomain.com/health
 
 Full documentation available at `/docs` when running the application.
 
+- **Local Onboarding**: See [docs/ONBOARDING.md](docs/ONBOARDING.md) for exact setup commands.
 - **Getting Started**: Setup and first campaign.
 - **CSV Format**: Required columns for contact import.
 - **API Reference**: Backend endpoints.
