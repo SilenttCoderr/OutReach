@@ -67,7 +67,10 @@ export async function uploadCSV(file: File): Promise<any> {
         throw new Error("Unauthorized");
     }
 
-    if (!res.ok) throw new Error("Upload failed");
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Upload failed");
+    }
     return res.json();
 }
 

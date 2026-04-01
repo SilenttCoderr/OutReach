@@ -37,7 +37,7 @@ async def upload_csv(
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
     user_upload_dir = UPLOAD_DIR / str(user.id)
-    user_upload_dir.mkdir(exist_ok=True)
+    user_upload_dir.mkdir(exist_ok=True, parents=True)
 
     file_path = user_upload_dir / file.filename
     with open(file_path, "wb") as f:

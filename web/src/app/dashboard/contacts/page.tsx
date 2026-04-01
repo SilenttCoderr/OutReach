@@ -37,8 +37,8 @@ export default function ContactsPage() {
                 text: `Uploaded ${res.new_added} new contacts (${res.already_exists} duplicates skipped)`
             });
             loadContacts();
-        } catch (error) {
-            setMessage({ type: 'error', text: "Upload failed. Check file format." });
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || "Upload failed. Check file format." });
         } finally {
             setUploading(false);
         }

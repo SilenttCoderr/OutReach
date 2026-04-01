@@ -1,0 +1,8 @@
+626e494 feat(02-01): extract campaign/contact route modules and shared dependencies
+44b0c43 docs(02): add phase context and executable plans
+2915651 docs(phase-01): evolve PROJECT.md after phase completion
+8dd48ed docs(phase-01): complete phase execution
+f00da59 feat(01-03): codify deployment contract and config hygiene
+08753eb feat(01-02): add startup preflight validation
+89ac027 feat(01-01): define architecture contract baseline
+ac0f129 docs(01): add phase context and executable plans

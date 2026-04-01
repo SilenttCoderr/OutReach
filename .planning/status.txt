@@ -1,0 +1,22 @@
+ M README.md
+ M app.py
+ M requirements.txt
+ M web/package-lock.json
+ M web/src/app/login/page.tsx
+ M web/src/app/signup/page.tsx
+ M web/src/components/layout/sidebar.tsx
+ M web/src/services/api.ts
+?? .github/
+?? .planning/.tmp_head.txt
+?? .planning/.tmp_log.txt
+?? .planning/.tmp_status.txt
+?? .planning/codebase/CONCERNS.md
+?? .planning/codebase/CONVENTIONS.md
+?? .planning/codebase/INTEGRATIONS.md
+?? .planning/codebase/STACK.md
+?? .planning/codebase/STRUCTURE.md
+?? .planning/codebase/TESTING.md
+?? .planning/head.txt
+?? .planning/log.txt
+?? .planning/status.txt
+?? docs/ONBOARDING.md
