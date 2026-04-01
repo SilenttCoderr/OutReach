@@ -69,3 +69,19 @@ client_secret*.json
 
 # OS
 Thumbs.db
+
+# Uploads (user runtime files — never commit real contact data)
+uploads/
+
+# Runtime artifacts
+data/tracking.json
+
+# Legacy static UI (replaced by Next.js frontend)
+static/
+
+# Profile config (replaced by UserProfile DB model)
+config/profile.json
+
+# Planning temp files
+.planning/.tmp_*.txt
+.planning/debug/
