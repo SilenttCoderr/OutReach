@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight } from "lucide-react";
-import { generateDrafts } from "@/services/api";
+import { useState, useEffect } from "react";
+import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
+import { generateDrafts, checkAuthStatus } from "@/services/api";
 import Link from "next/link";
 
 export default function CampaignsPage() {
@@ -10,6 +10,15 @@ export default function CampaignsPage() {
     const [attachments, setAttachments] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ success: number, failed: number } | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [gmailConnected, setGmailConnected] = useState<boolean | null>(null); // null = loading
+
+    useEffect(() => {
+        checkAuthStatus().then((status) => {
+            // @ts-ignore
+            setGmailConnected(status.gmail_connected ?? false);
+        }).catch(() => setGmailConnected(false));
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -18,14 +27,23 @@ export default function CampaignsPage() {
     };
 
     const handleGenerate = async () => {
+        if (!gmailConnected) {
+            setMessage({ type: 'error', text: 'Please connect your Gmail account first by logging in with Google.' });
+            return;
+        }
         setLoading(true);
         setResult(null);
+        setMessage(null);
         try {
             const data = await generateDrafts(useLLM, attachments);
             setResult({ success: data.success, failed: data.failed });
-        } catch (error) {
-            console.error(error);
-            alert("Failed to generate drafts");
+            if (data.success > 0) {
+                setMessage({ type: 'success', text: `Created ${data.success} draft(s) in your Gmail!` });
+            } else if (data.failed > 0) {
+                setMessage({ type: 'error', text: `${data.failed} draft(s) failed. Check your profile and contacts.` });
+            }
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || "Failed to generate drafts. Please try again." });
         } finally {
             setLoading(false);
         }
@@ -41,6 +59,44 @@ export default function CampaignsPage() {
                 </div>
 
                 <div className="space-y-6">
+                    {/* Gmail Connection Warning */}
+                    {gmailConnected === false && (
+                        <div className="card p-5 bg-warning/5 border border-warning/30 flex items-start gap-4">
+                            <div className="p-2 rounded-lg bg-warning/20 shrink-0">
+                                <AlertTriangle className="w-5 h-5 text-warning" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-text-primary mb-1">Gmail Not Connected</h3>
+                                <p className="text-sm text-text-secondary mb-3">
+                                    Emails are sent <strong>from your own Gmail account</strong>. You must sign in with Google to grant Gmail access. Email/password accounts cannot send emails.
+                                </p>
+                                <a
+                                    href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google`}
+                                    className="btn-primary text-sm inline-flex items-center gap-2"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    Connect Gmail via Google
+                                </a>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Message Banner */}
+                    {message && (
+                        <div className={`p-4 rounded-lg flex items-start gap-3 ${message.type === 'success'
+                            ? 'bg-success/10 border border-success/30'
+                            : 'bg-error/10 border border-error/30'
+                        }`}>
+                            {message.type === 'success'
+                                ? <CheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                                : <AlertTriangle className="w-5 h-5 text-error shrink-0 mt-0.5" />
+                            }
+                            <span className={`text-sm ${message.type === 'success' ? 'text-success' : 'text-error'}`}>
+                                {message.text}
+                            </span>
+                        </div>
+                    )}
+
                     {/* AI Toggle */}
                     <div className="card p-6">
                         <div className="flex items-start justify-between">
@@ -137,8 +193,8 @@ export default function CampaignsPage() {
                     {/* Generate Button */}
                     <button
                         onClick={handleGenerate}
-                        disabled={loading}
-                        className="btn-primary w-full h-12 text-base font-semibold"
+                        disabled={loading || gmailConnected === false}
+                        className={`btn-primary w-full h-12 text-base font-semibold ${gmailConnected === false ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {loading ? (
                             <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</>
@@ -148,7 +204,7 @@ export default function CampaignsPage() {
                     </button>
 
                     <p className="text-center text-sm text-text-muted">
-                        Creates drafts in Gmail for all unprocessed contacts
+                        Creates drafts in your Gmail for all unprocessed contacts · Emails sent from <strong>your</strong> Gmail address
                     </p>
                 </div>
             </div>

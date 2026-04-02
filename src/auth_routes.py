@@ -152,8 +152,9 @@ async def auth_status(user: User = Depends(get_current_user)):
             "authenticated": True,
             "email": user.email,
             "credits": user.credits,
+            "gmail_connected": bool(user.access_token),
         }
-    return {"authenticated": False}
+    return {"authenticated": False, "gmail_connected": False}
 
 
 @router.post("/logout")

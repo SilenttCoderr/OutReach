@@ -155,9 +155,12 @@ def create_drafts_for_new_contacts(
     use_llm: bool,
     attachment_paths: Optional[List[str]] = None,
 ) -> Dict[str, int]:
+    # Validate profile first — gives the user the most actionable error
+    user_profile = _get_user_profile(db, user.id)
+
     gmail = GmailAdapter(user)
     if not gmail.authenticate():
-        raise PermissionError("Gmail not connected. Please login with Google again.")
+        raise PermissionError("Gmail not connected. Please login with Google to enable email drafting.")
 
     contacts = db.query(Contact).filter(Contact.user_id == user.id, Contact.status == "new").all()
     if not contacts:
@@ -167,7 +170,7 @@ def create_drafts_for_new_contacts(
         raise ValueError(f"Insufficient credits. You have {user.credits} but need {len(contacts)}.")
 
     generator = _get_generator(use_llm)
-    user_profile = _get_user_profile(db, user.id)
+    # user_profile already fetched above (before Gmail auth check)
 
     success = 0
     failed = 0
@@ -183,7 +186,7 @@ def create_drafts_for_new_contacts(
             if use_llm:
                 result = generator.generate(recruiter_data, user_profile, has_attachments=bool(attachment_paths))
             else:
-                 result = generator.generate(recruiter_data, has_attachments=bool(attachment_paths))
+                result = generator.generate(recruiter_data, user_profile, has_attachments=bool(attachment_paths))
             
             draft_result = gmail.create_draft(
                 contact.email,

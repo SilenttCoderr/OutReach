@@ -132,7 +132,7 @@ export async function registerWithEmail(name: string, email: string, password: s
     return res.json();
 }
 
-export async function checkAuthStatus(): Promise<{ authenticated: boolean; email?: string; credits?: number }> {
+export async function checkAuthStatus(): Promise<{ authenticated: boolean; email?: string; credits?: number; gmail_connected?: boolean }> {
     try {
         const headers = getAuthHeader();
         if (!headers.Authorization) return { authenticated: false };
@@ -204,7 +204,15 @@ export async function generateDrafts(useLLM: boolean, attachments: File[]): Prom
         body: formData,
     });
 
-    if (!res.ok) throw new Error("Failed to generate drafts");
+    if (res.status === 401) {
+        window.location.href = "/login";
+        throw new Error("Unauthorized");
+    }
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Failed to generate drafts");
+    }
     return res.json();
 }
 
