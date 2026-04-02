@@ -4,6 +4,7 @@ import shutil
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.application import contact_service
@@ -32,9 +33,13 @@ async def upload_csv(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),
 ):
-    """Upload a CSV file, save contacts to database, and backup to R2."""
-    if not file.filename or not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    """Upload a CSV/Excel file, save contacts to database, and backup to R2."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Invalid file")
+        
+    ext = file.filename.split(".")[-1].lower()
+    if ext not in ["csv", "xlsx", "xls"]:
+        raise HTTPException(status_code=400, detail="Only CSV and Excel (.xlsx, .xls) files are supported")
 
     user_upload_dir = UPLOAD_DIR / str(user.id)
     user_upload_dir.mkdir(exist_ok=True, parents=True)
@@ -63,3 +68,26 @@ async def upload_csv(
         }
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Processing Error: {str(exc)}")
+
+
+class ManualContactRequest(BaseModel):
+    recruiter_name: str
+    recruiter_email: str
+    company: str
+    role: str
+
+
+@router.post("/manual")
+async def add_manual_contact(
+    contact: ManualContactRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db_session),
+):
+    """Manually add a single contact."""
+    try:
+        result = contact_service.add_single_contact(db, user, contact.model_dump())
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to add contact: {str(exc)}")

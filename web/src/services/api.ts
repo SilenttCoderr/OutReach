@@ -74,6 +74,29 @@ export async function uploadCSV(file: File): Promise<any> {
     return res.json();
 }
 
+export async function addManualContact(contact: Partial<Recruiter>): Promise<Recruiter> {
+    const headers = getAuthHeader();
+    const res = await fetch(`${API_BASE_URL}/manual`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...headers,
+        } as any,
+        body: JSON.stringify(contact),
+    });
+
+    if (res.status === 401) {
+        window.location.href = "/login";
+        throw new Error("Unauthorized");
+    }
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data.detail as string) || "Failed to add contact");
+    }
+    return res.json();
+}
+
 export interface AuthTokenResponse {
     access_token: string;
     token_type: string;

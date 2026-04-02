@@ -19,7 +19,15 @@ class DataProcessor:
     def load_csv(self, filepath: str) -> List[Dict]:
         """Load recruiter data from CSV file. Supports both standard and Apollo.io format."""
         df = pd.read_csv(filepath)
-        
+        return self._process_dataframe(df)
+    
+    def load_excel(self, filepath: str) -> List[Dict]:
+        """Load recruiter data from Excel file. Supports both standard and Apollo.io format."""
+        df = pd.read_excel(filepath)
+        return self._process_dataframe(df)
+
+    def _process_dataframe(self, df: pd.DataFrame) -> List[Dict]:
+        """Shared logic to validate and process pandas DataFrame into recruiters."""
         # Check if this is an Apollo.io export (has 'First Name' column)
         if 'First Name' in df.columns:
             df = self._convert_apollo_format(df)
@@ -35,6 +43,9 @@ class DataProcessor:
             df['company_type'] = 'unknown'
         if 'notes' not in df.columns:
             df['notes'] = ''
+        
+        # Fill NaN values to prevent database conversion errors
+        df = df.fillna('')
         
         self.recruiters = df.to_dict('records')
         return self.recruiters
@@ -93,6 +104,8 @@ class DataProcessor:
         
         if path.suffix.lower() == '.csv':
             return self.load_csv(filepath)
+        elif path.suffix.lower() in ['.xlsx', '.xls']:
+            return self.load_excel(filepath)
         elif path.suffix.lower() == '.json':
             return self.load_json(filepath)
         else:

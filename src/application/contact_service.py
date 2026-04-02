@@ -71,3 +71,35 @@ def process_uploaded_contacts(db: Session, user: User, file_path: str) -> Dict[s
     except Exception:
         db.rollback()
         raise
+
+
+def add_single_contact(db: Session, user: User, contact_data: Dict) -> Dict:
+    """Manually add a single contact to the database."""
+    email = contact_data.get("recruiter_email", "").strip()
+    if not email:
+        raise ValueError("Email is required")
+
+    existing = db.query(Contact).filter(Contact.user_id == user.id, Contact.email == email).first()
+    if existing:
+        raise ValueError("A contact with this email already exists")
+
+    new_contact = Contact(
+        user_id=user.id,
+        name=contact_data.get("recruiter_name", "").strip(),
+        email=email,
+        company=contact_data.get("company", "").strip(),
+        role=contact_data.get("role", "").strip(),
+        status="new"
+    )
+    db.add(new_contact)
+    db.commit()
+    db.refresh(new_contact)
+    
+    return {
+        "id": new_contact.id,
+        "name": new_contact.name,
+        "email": new_contact.email,
+        "company": new_contact.company,
+        "role": new_contact.role,
+        "status": new_contact.status,
+    }

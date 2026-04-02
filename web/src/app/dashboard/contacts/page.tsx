@@ -1,14 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, CheckCircle, AlertCircle, Users, Search } from "lucide-react";
-import { uploadCSV, fetchContacts, type Recruiter } from "@/services/api";
+import { Upload, CheckCircle, AlertCircle, Users, Search, Plus, X } from "lucide-react";
+import { uploadCSV, fetchContacts, addManualContact, type Recruiter } from "@/services/api";
 
 export default function ContactsPage() {
     const [contacts, setContacts] = useState<Recruiter[]>([]);
     const [uploading, setUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    
+    // Manual Contact State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [addingManual, setAddingManual] = useState(false);
+    const [manualForm, setManualForm] = useState({
+        recruiter_name: "",
+        recruiter_email: "",
+        company: "",
+        role: ""
+    });
 
     useEffect(() => {
         loadContacts();
@@ -44,6 +54,23 @@ export default function ContactsPage() {
         }
     };
 
+    const handleAddManual = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setAddingManual(true);
+        setMessage(null);
+        try {
+            await addManualContact(manualForm);
+            setMessage({ type: 'success', text: `Added contact: ${manualForm.recruiter_name}` });
+            setIsModalOpen(false);
+            setManualForm({ recruiter_name: "", recruiter_email: "", company: "", role: "" });
+            loadContacts();
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || "Failed to add contact." });
+        } finally {
+            setAddingManual(false);
+        }
+    };
+
     const filteredContacts = contacts.filter(c =>
         c.recruiter_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.recruiter_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -59,22 +86,33 @@ export default function ContactsPage() {
                     <p className="section-description">{contacts.length} prospects in your list</p>
                 </div>
 
-                <div className="relative">
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="btn-secondary"
                         disabled={uploading}
-                    />
-                    <button className={`btn-primary ${uploading ? 'opacity-50' : ''}`}>
-                        {uploading ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                            <Upload className="w-4 h-4" />
-                        )}
-                        {uploading ? "Uploading..." : "Upload CSV"}
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Manually
                     </button>
+                    
+                    <div className="relative">
+                        <input
+                            type="file"
+                            accept=".csv, .xlsx, .xls"
+                            onChange={handleFileUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            disabled={uploading}
+                        />
+                        <button className={`btn-primary ${uploading ? 'opacity-50' : ''}`}>
+                            {uploading ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <Upload className="w-4 h-4" />
+                            )}
+                            {uploading ? "Uploading..." : "Upload File"}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -164,6 +202,84 @@ export default function ContactsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Add Contact Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-bg-elevated border border-border-light rounded-xl w-full max-w-md shadow-2xl p-6 relative">
+                        <button 
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute right-4 top-4 text-text-muted hover:text-text-primary transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <h2 className="text-xl font-bold text-text-primary mb-1">Add Contact</h2>
+                        <p className="text-sm text-text-muted mb-6">Manually add a prospect to your list.</p>
+                        
+                        <form onSubmit={handleAddManual} className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1">Name</label>
+                                <input 
+                                    className="input" 
+                                    required
+                                    value={manualForm.recruiter_name}
+                                    onChange={e => setManualForm({...manualForm, recruiter_name: e.target.value})}
+                                    placeholder="e.g. Sarah Connor"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1">Email</label>
+                                <input 
+                                    className="input" 
+                                    type="email"
+                                    required
+                                    value={manualForm.recruiter_email}
+                                    onChange={e => setManualForm({...manualForm, recruiter_email: e.target.value})}
+                                    placeholder="sarah@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1">Company</label>
+                                <input 
+                                    className="input" 
+                                    required
+                                    value={manualForm.company}
+                                    onChange={e => setManualForm({...manualForm, company: e.target.value})}
+                                    placeholder="e.g. Google"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1">Role</label>
+                                <input 
+                                    className="input" 
+                                    required
+                                    value={manualForm.role}
+                                    onChange={e => setManualForm({...manualForm, role: e.target.value})}
+                                    placeholder="e.g. Senior Recruiter"
+                                />
+                            </div>
+                            
+                            <div className="flex justify-end gap-3 mt-4">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="btn-secondary"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={addingManual}
+                                    className={`btn-primary ${addingManual ? 'opacity-70' : ''}`}
+                                >
+                                    {addingManual ? 'Adding...' : 'Add Contact'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
