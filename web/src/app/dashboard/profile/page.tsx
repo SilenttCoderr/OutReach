@@ -19,8 +19,8 @@ export default function ProfilePage() {
         degree: "",
         university: "",
         experience_summary: "",
-        skills: [""],
-        key_highlights: [""],
+        key_skills: [""],
+        highlights: [""],
         email_sign_off: "Best regards,"
     });
 
@@ -36,8 +36,8 @@ export default function ProfilePage() {
                 setProfile({
                     ...data,
                     // Ensure arrays have at least one empty string if empty
-                    skills: data.skills?.length ? data.skills : [""],
-                    key_highlights: data.key_highlights?.length ? data.key_highlights : [""]
+                    key_skills: data.key_skills?.length ? data.key_skills : [""],
+                    highlights: data.highlights?.length ? data.highlights : [""]
                 });
             } catch (err: any) {
                 console.error("Failed to load profile:", err);
@@ -59,8 +59,8 @@ export default function ProfilePage() {
             // Clean up arrays: remove empty strings
             const cleanedProfile = {
                 ...profile,
-                skills: profile.skills.filter(s => s.trim() !== ""),
-                key_highlights: profile.key_highlights.filter(h => h.trim() !== "")
+                key_skills: profile.key_skills.filter(s => s.trim() !== ""),
+                highlights: profile.highlights.filter(h => h.trim() !== "")
             };
             
             await upsertProfile(cleanedProfile);
@@ -70,8 +70,8 @@ export default function ProfilePage() {
             // Re-pad arrays if they're empty now
             setProfile({
                 ...cleanedProfile,
-                skills: cleanedProfile.skills.length ? cleanedProfile.skills : [""],
-                key_highlights: cleanedProfile.key_highlights.length ? cleanedProfile.key_highlights : [""]
+                key_skills: cleanedProfile.key_skills.length ? cleanedProfile.key_skills : [""],
+                highlights: cleanedProfile.highlights.length ? cleanedProfile.highlights : [""]
             });
         } catch (err: any) {
             setError(err.message || "Failed to save profile.");
@@ -80,17 +80,17 @@ export default function ProfilePage() {
         }
     };
 
-    const handleArrayChange = (field: 'skills' | 'key_highlights', index: number, value: string) => {
+    const handleArrayChange = (field: 'key_skills' | 'highlights', index: number, value: string) => {
         const newArray = [...profile[field]];
         newArray[index] = value;
         setProfile({ ...profile, [field]: newArray });
     };
 
-    const addArrayItem = (field: 'skills' | 'key_highlights') => {
+    const addArrayItem = (field: 'key_skills' | 'highlights') => {
         setProfile({ ...profile, [field]: [...profile[field], ""] });
     };
 
-    const removeArrayItem = (field: 'skills' | 'key_highlights', index: number) => {
+    const removeArrayItem = (field: 'key_skills' | 'highlights', index: number) => {
         const newArray = profile[field].filter((_, i) => i !== index);
         if (newArray.length === 0) newArray.push("");
         setProfile({ ...profile, [field]: newArray });
@@ -265,18 +265,18 @@ export default function ProfilePage() {
                                         <label className="text-sm font-medium text-text-secondary">Key Highlights</label>
                                     </div>
                                     <p className="text-xs text-text-muted">Specific impressive metrics, built systems, or achievements for the AI to dynamically adapt to the recruiter's company profile.</p>
-                                    {profile.key_highlights.map((highlight, index) => (
+                                    {profile.highlights.map((highlight, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                             <input
                                                 type="text"
                                                 className="input-field flex-1"
                                                 value={highlight}
-                                                onChange={e => handleArrayChange('key_highlights', index, e.target.value)}
+                                                onChange={e => handleArrayChange('highlights', index, e.target.value)}
                                                 placeholder="e.g. Led migration to Next.js reducing load time by 40%"
                                             />
                                             <button 
                                                 type="button" 
-                                                onClick={() => removeArrayItem('key_highlights', index)}
+                                                onClick={() => removeArrayItem('highlights', index)}
                                                 className="p-2 text-text-muted hover:text-error transition-colors"
                                             >
                                                 <X className="w-4 h-4" />
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                                     ))}
                                     <button 
                                         type="button"
-                                        onClick={() => addArrayItem('key_highlights')}
+                                        onClick={() => addArrayItem('highlights')}
                                         className="text-sm text-accent hover:underline flex items-center gap-1 mt-2"
                                     >
                                         <Plus className="w-4 h-4" /> Add Highlight
@@ -296,18 +296,18 @@ export default function ProfilePage() {
                                     <div className="flex items-center justify-between">
                                         <label className="text-sm font-medium text-text-secondary">Core Skills</label>
                                     </div>
-                                    {profile.skills.map((skill, index) => (
+                                    {profile.key_skills.map((skill, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                             <input
                                                 type="text"
                                                 className="input-field flex-1"
                                                 value={skill}
-                                                onChange={e => handleArrayChange('skills', index, e.target.value)}
+                                                onChange={e => handleArrayChange('key_skills', index, e.target.value)}
                                                 placeholder="e.g. Python, React, PostgreSQL"
                                             />
                                             <button 
                                                 type="button" 
-                                                onClick={() => removeArrayItem('skills', index)}
+                                                onClick={() => removeArrayItem('key_skills', index)}
                                                 className="p-2 text-text-muted hover:text-error transition-colors"
                                             >
                                                 <X className="w-4 h-4" />
@@ -316,7 +316,7 @@ export default function ProfilePage() {
                                     ))}
                                     <button 
                                         type="button"
-                                        onClick={() => addArrayItem('skills')}
+                                        onClick={() => addArrayItem('key_skills')}
                                         className="text-sm text-accent hover:underline flex items-center gap-1 mt-2"
                                     >
                                         <Plus className="w-4 h-4" /> Add Skill

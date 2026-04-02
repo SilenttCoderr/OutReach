@@ -285,8 +285,8 @@ export interface UserProfile {
     degree: string;
     university: string;
     experience_summary: string;
-    skills: string[];
-    key_highlights: string[];
+    key_skills: string[];
+    highlights: string[];
     email_sign_off: string;
     created_at?: string;
     updated_at?: string;
@@ -315,8 +315,8 @@ export async function fetchProfile(): Promise<UserProfile> {
             degree: "",
             university: "",
             experience_summary: "",
-            skills: [],
-            key_highlights: [],
+            key_skills: [],
+            highlights: [],
             email_sign_off: "Best regards,"
         };
     }
