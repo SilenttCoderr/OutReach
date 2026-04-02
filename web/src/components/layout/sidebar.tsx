@@ -44,20 +44,42 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-1">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`nav-item ${isActive ? 'active' : ''}`}
-                        >
-                            <item.icon className="w-5 h-5" />
-                            {item.label}
-                        </Link>
-                    );
-                })}
+            <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
+                {/* Core Usage */}
+                <div className="space-y-1">
+                    <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Workspace</p>
+                    {navItems.slice(0, 5).map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <item.icon className="w-5 h-5" />
+                                {item.label}
+                            </Link>
+                        );
+                    })}
+                </div>
+
+                {/* Preferences */}
+                <div className="space-y-1">
+                    <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Preferences</p>
+                    {navItems.slice(5).map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <item.icon className="w-5 h-5" />
+                                {item.label}
+                            </Link>
+                        );
+                    })}
+                </div>
             </nav>
 
             {/* Logout */}
