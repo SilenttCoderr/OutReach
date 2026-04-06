@@ -94,14 +94,16 @@ const faqs = [
 
 export default function PricingPage() {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     const handleBuyCredits = async (credits: number, price: number) => {
+        setCheckoutError(null);
         try {
             const { url } = await buyCredits(credits, price * 100);
-            window.location.href = url;
-        } catch (error) {
-            alert("Please login first to purchase credits");
-            window.location.href = "/login";
+            window.location.assign(url);
+        } catch {
+            setCheckoutError("Please login first to purchase credits.");
+            window.location.assign("/login?next=/pricing");
         }
     };
 
@@ -138,6 +140,11 @@ export default function PricingPage() {
                         Pay only for what you use. No subscriptions, no hidden fees.
                         Credits never expire.
                     </p>
+                    {checkoutError && (
+                        <p className="mt-4 text-sm text-error bg-error/10 border border-error/30 rounded-lg px-4 py-2 inline-block" role="alert">
+                            {checkoutError}
+                        </p>
+                    )}
                 </section>
 
                 {/* Pricing Cards */}

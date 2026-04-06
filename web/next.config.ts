@@ -1,12 +1,4 @@
-import type { NextConfig } from "next";
-
-const nextConfig: any = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+const nextConfig = {
   // Contract: local-only API rewrite. Preview/prod must use NEXT_PUBLIC_API_URL.
   async rewrites() {
     // When NEXT_PUBLIC_API_URL is absent, default to local backend for development.

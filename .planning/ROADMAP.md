@@ -65,7 +65,7 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 02.1-01-PLAN.md - Harden frontend API/session boundary and auth/checkout behavior
+- [x] 02.1-01-PLAN.md - Harden frontend API/session boundary and auth/checkout behavior
 - [ ] 02.1-02-PLAN.md - Refine public marketing and auth UI consistency
 - [ ] 02.1-03-PLAN.md - Polish dashboard workflows and shell behavior
 - [ ] 02.1-04-PLAN.md - Add frontend release gates, smoke tests, and UAT sign-off
@@ -137,7 +137,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Baseline and Deployment Contracts | 3/3 | Complete    | 2026-03-31 |
 | 2. Backend Modularization Pass | 0/3 | Not started | - |
-| 2.1. Frontend Refinement and Ship Readiness | 0/4 | Not started | - |
+| 2.1. Frontend Refinement and Ship Readiness | 1/4 | In Progress | - |
 | 3. Data and Pipeline Cohesion | 0/2 | Not started | - |
 | 4. Security and Auth Hardening | 0/3 | Not started | - |
 | 5. Observability and Runtime Reliability | 0/2 | Not started | - |

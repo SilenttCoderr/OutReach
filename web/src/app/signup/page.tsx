@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MoveLeft, Zap, Check } from "lucide-react";
-import { registerWithEmail } from "@/services/api";
+import { getGoogleAuthUrl, registerWithEmail, setAuthToken } from "@/services/api";
 
 export default function SignUpPage() {
     const [name, setName] = useState("");
@@ -13,9 +13,7 @@ export default function SignUpPage() {
     const [loading, setLoading] = useState(false);
 
     const handleGoogleSignup = () => {
-        const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-        const apiOrigin = rawApiUrl.endsWith("/api") ? rawApiUrl.slice(0, -4) : rawApiUrl;
-        window.location.href = `${apiOrigin}/api/auth/google`;
+        window.location.assign(getGoogleAuthUrl());
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +30,7 @@ export default function SignUpPage() {
         setLoading(true);
         try {
             const { access_token } = await registerWithEmail(name, email, password);
-            localStorage.setItem("token", access_token);
+            setAuthToken(access_token);
             window.location.assign("/dashboard");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Registration failed");
@@ -65,7 +63,7 @@ export default function SignUpPage() {
 
                     {/* Benefits */}
                     <div className="space-y-3 p-4 bg-bg-elevated rounded-lg">
-                        <p className="text-sm font-medium text-text-primary">What you'll get:</p>
+                        <p className="text-sm font-medium text-text-primary">What you get:</p>
                         <ul className="space-y-2">
                             <li className="flex items-center gap-2 text-sm text-text-secondary">
                                 <Check className="w-4 h-4 text-success" /> 10 free credits to start

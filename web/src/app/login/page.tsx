@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MoveLeft, Zap } from "lucide-react";
-import { loginWithEmail } from "@/services/api";
+import { getGoogleAuthUrl, loginWithEmail, setAuthToken } from "@/services/api";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -12,9 +12,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     const handleGoogleLogin = () => {
-        const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-        const apiOrigin = rawApiUrl.endsWith("/api") ? rawApiUrl.slice(0, -4) : rawApiUrl;
-        window.location.href = `${apiOrigin}/api/auth/google`;
+        window.location.assign(getGoogleAuthUrl());
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -27,7 +25,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             const { access_token } = await loginWithEmail(email, password);
-            localStorage.setItem("token", access_token);
+            setAuthToken(access_token);
             window.location.assign("/dashboard");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Invalid email or password");
@@ -136,7 +134,7 @@ export default function LoginPage() {
 
                     {/* Sign Up */}
                     <p className="text-center text-sm text-text-secondary">
-                        Don't have an account?{" "}
+                        Do not have an account?{" "}
                         <Link href="/signup" className="text-accent hover:underline font-medium">Sign up</Link>
                     </p>
                 </div>
