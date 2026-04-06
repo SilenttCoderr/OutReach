@@ -71,7 +71,7 @@ export default function TemplatesPage() {
                 ))}
 
                 {/* Add Template Card */}
-                <div className="card p-5 cursor-pointer border-dashed hover:border-accent/50 flex items-center justify-center min-h-[120px]">
+                <div className="card p-5 cursor-pointer border-dashed hover:border-accent/50 flex items-center justify-center min-h-32">
                     <div className="text-center">
                         <div className="w-10 h-10 rounded-lg bg-bg-elevated flex items-center justify-center mx-auto mb-3">
                             <Plus className="w-5 h-5 text-text-muted" />

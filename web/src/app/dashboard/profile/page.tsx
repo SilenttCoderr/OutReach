@@ -255,7 +255,7 @@ export default function ProfilePage() {
                                     <p className="text-xs text-text-muted mb-2">A 1-2 sentence elevator pitch of your experience used in the emails.</p>
                                     <textarea
                                         required
-                                        className="input-field min-h-[100px] resize-y leading-[1.7] tracking-wide"
+                                        className="input-field min-h-28 resize-y leading-relaxed"
                                         value={profile.experience_summary}
                                         onChange={e => setProfile({...profile, experience_summary: e.target.value})}
                                         placeholder="e.g. Over the past 3 years, I've developed scalable microservices in Go and optimized database performance, leading to a 30% reduction in latency."

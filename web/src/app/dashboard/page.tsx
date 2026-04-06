@@ -95,7 +95,7 @@ function DashboardContent() {
                             <div className="w-12 h-12 bg-bg-elevated rounded-xl"></div>
                             <div className="flex-1 space-y-3">
                                 <div className="h-5 w-32 bg-bg-elevated rounded"></div>
-                                <div className="h-4 w-full max-w-[200px] bg-bg-elevated rounded"></div>
+                                <div className="h-4 w-full max-w-48 bg-bg-elevated rounded"></div>
                                 <div className="h-8 w-24 bg-bg-elevated rounded mt-2"></div>
                             </div>
                         </div>
