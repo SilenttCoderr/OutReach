@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Upload, CheckCircle, AlertCircle, Users, Search, Plus, X } from "lucide-react";
-import { uploadCSV, fetchContacts, addManualContact, type Recruiter } from "@/services/api";
+import { uploadCSV, fetchContacts, addManualContact, type Recruiter, type ManualContactPayload } from "@/services/api";
 
 export default function ContactsPage() {
     const [contacts, setContacts] = useState<Recruiter[]>([]);
@@ -13,7 +13,7 @@ export default function ContactsPage() {
     // Manual Contact State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [addingManual, setAddingManual] = useState(false);
-    const [manualForm, setManualForm] = useState({
+    const [manualForm, setManualForm] = useState<ManualContactPayload>({
         recruiter_name: "",
         recruiter_email: "",
         company: "",
@@ -21,7 +21,7 @@ export default function ContactsPage() {
     });
 
     useEffect(() => {
-        loadContacts();
+        void loadContacts();
     }, []);
 
     async function loadContacts() {
@@ -46,9 +46,10 @@ export default function ContactsPage() {
                 type: 'success',
                 text: `Uploaded ${res.new_added} new contacts (${res.already_exists} duplicates skipped)`
             });
-            loadContacts();
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || "Upload failed. Check file format." });
+            await loadContacts();
+        } catch (error: unknown) {
+            const messageText = error instanceof Error ? error.message : "Upload failed. Check file format.";
+            setMessage({ type: 'error', text: messageText });
         } finally {
             setUploading(false);
         }
@@ -63,9 +64,10 @@ export default function ContactsPage() {
             setMessage({ type: 'success', text: `Added contact: ${manualForm.recruiter_name}` });
             setIsModalOpen(false);
             setManualForm({ recruiter_name: "", recruiter_email: "", company: "", role: "" });
-            loadContacts();
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || "Failed to add contact." });
+            await loadContacts();
+        } catch (error: unknown) {
+            const messageText = error instanceof Error ? error.message : "Failed to add contact.";
+            setMessage({ type: 'error', text: messageText });
         } finally {
             setAddingManual(false);
         }
@@ -173,8 +175,8 @@ export default function ContactsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredContacts.map((contact, i) => (
-                                    <tr key={i} className="table-row">
+                                filteredContacts.map((contact) => (
+                                    <tr key={contact.id || contact.recruiter_email} className="table-row">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium text-accent">
@@ -206,7 +208,7 @@ export default function ContactsPage() {
             {/* Add Contact Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-bg-elevated border border-border-light rounded-xl w-full max-w-md shadow-2xl p-6 relative">
+                    <div className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
                         <button 
                             onClick={() => setIsModalOpen(false)}
                             className="absolute right-4 top-4 text-text-muted hover:text-text-primary transition-colors"

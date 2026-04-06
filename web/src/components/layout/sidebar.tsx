@@ -10,9 +10,11 @@ import {
     Settings,
     FileText,
     LogOut,
+    X,
     Zap,
     UserCircle
 } from "lucide-react";
+import { logout } from "@/services/api";
 
 const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,28 +26,44 @@ const navItems = [
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    mobileOpen?: boolean;
+    onClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     const pathname = usePathname();
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("access_token");
-        window.location.href = "/login";
+        logout();
+        onClose?.();
     };
 
-    return (
-        <aside className="w-64 h-screen bg-bg-surface border-r border-border flex flex-col">
+    const renderNavigation = (isMobile: boolean) => (
+        <>
             {/* Logo */}
-            <div className="h-16 px-5 flex items-center gap-3 border-b border-border">
-                <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-white" />
+            <div className="h-16 px-5 flex items-center justify-between border-b border-border">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="font-bold text-lg text-text-primary">OutreachPro</span>
                 </div>
-                <span className="font-bold text-lg text-text-primary">OutreachPro</span>
+
+                {isMobile && (
+                    <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-bg-elevated transition-colors"
+                        onClick={onClose}
+                        aria-label="Close navigation menu"
+                    >
+                        <X className="w-5 h-5 text-text-secondary" />
+                    </button>
+                )}
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
-                {/* Core Usage */}
                 <div className="space-y-1">
                     <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Workspace</p>
                     {navItems.slice(0, 5).map((item) => {
@@ -54,7 +72,12 @@ export function Sidebar() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`nav-item ${isActive ? 'active' : ''}`}
+                                onClick={() => {
+                                    if (isMobile) {
+                                        onClose?.();
+                                    }
+                                }}
+                                className={`nav-item ${isActive ? "active" : ""}`}
                             >
                                 <item.icon className="w-5 h-5" />
                                 {item.label}
@@ -63,7 +86,6 @@ export function Sidebar() {
                     })}
                 </div>
 
-                {/* Preferences */}
                 <div className="space-y-1">
                     <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Preferences</p>
                     {navItems.slice(5).map((item) => {
@@ -72,7 +94,12 @@ export function Sidebar() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`nav-item ${isActive ? 'active' : ''}`}
+                                onClick={() => {
+                                    if (isMobile) {
+                                        onClose?.();
+                                    }
+                                }}
+                                className={`nav-item ${isActive ? "active" : ""}`}
                             >
                                 <item.icon className="w-5 h-5" />
                                 {item.label}
@@ -92,6 +119,29 @@ export function Sidebar() {
                     Logout
                 </button>
             </div>
-        </aside>
+        </>
+    );
+
+    return (
+        <>
+            <aside className="hidden lg:flex w-64 h-screen bg-bg-surface border-r border-border flex-col">
+                {renderNavigation(false)}
+            </aside>
+
+            {mobileOpen && (
+                <div className="fixed inset-0 z-50 lg:hidden">
+                    <button
+                        type="button"
+                        className="absolute inset-0 bg-black/50"
+                        aria-label="Close navigation overlay"
+                        onClick={onClose}
+                    />
+
+                    <aside className="relative w-72 max-w-[85vw] h-full bg-bg-surface border-r border-border flex flex-col shadow-2xl">
+                        {renderNavigation(true)}
+                    </aside>
+                </div>
+            )}
+        </>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Mail, Send, ExternalLink, Loader2, CheckCircle, AlertCircle, Rocket } from "lucide-react";
 import { fetchDrafts, sendDraft, sendAllDrafts, type EmailLog } from "@/services/api";
 
@@ -11,21 +11,26 @@ export default function DraftsPage() {
     const [selectedDraft, setSelectedDraft] = useState<EmailLog | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    useEffect(() => {
-        loadDrafts();
-    }, []);
-
-    async function loadDrafts() {
+    const loadDrafts = useCallback(async () => {
         try {
             const data = await fetchDrafts();
             setDrafts(data);
-            if (data.length > 0 && !selectedDraft) {
-                setSelectedDraft(data[0]);
-            }
+            setSelectedDraft((prev) => {
+                if (!prev) {
+                    return data[0] || null;
+                }
+
+                const updatedSelection = data.find((draft) => draft.id === prev.id);
+                return updatedSelection || data[0] || null;
+            });
         } catch (error) {
             console.error(error);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        void loadDrafts();
+    }, [loadDrafts]);
 
     const handleSend = async (id: number) => {
         setSendingId(id);
@@ -33,8 +38,8 @@ export default function DraftsPage() {
         try {
             await sendDraft(id);
             setMessage({ type: 'success', text: "Email sent successfully!" });
-            loadDrafts();
-        } catch (error) {
+            await loadDrafts();
+        } catch {
             setMessage({ type: 'error', text: "Failed to send. Check Gmail draft." });
         } finally {
             setSendingId(null);
@@ -47,8 +52,10 @@ export default function DraftsPage() {
         try {
             await sendAllDrafts();
             setMessage({ type: 'success', text: "Batch send started!" });
-            setTimeout(loadDrafts, 2000);
-        } catch (error) {
+            setTimeout(() => {
+                void loadDrafts();
+            }, 2000);
+        } catch {
             setMessage({ type: 'error', text: "Failed to start batch send." });
         } finally {
             setSendingAll(false);

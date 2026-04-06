@@ -15,7 +15,7 @@ import {
     CheckCircle,
     Clock
 } from "lucide-react";
-import { fetchStats, checkAuthStatus, buyCredits, type Stats } from "@/services/api";
+import { fetchStats, checkAuthStatus, type Stats } from "@/services/api";
 
 export default function DashboardPage() {
     return (

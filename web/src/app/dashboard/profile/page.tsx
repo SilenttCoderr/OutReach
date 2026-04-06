@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { fetchProfile, upsertProfile, type UserProfile, checkAuthStatus } from "@/services/api";
 import { Save, Plus, X, UserCircle } from "lucide-react";
 
+function getErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
@@ -21,6 +25,7 @@ export default function ProfilePage() {
         experience_summary: "",
         key_skills: [""],
         highlights: [""],
+        preferred_roles: [],
         email_sign_off: "Best regards,"
     });
 
@@ -39,9 +44,9 @@ export default function ProfilePage() {
                     key_skills: data.key_skills?.length ? data.key_skills : [""],
                     highlights: data.highlights?.length ? data.highlights : [""]
                 });
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Failed to load profile:", err);
-                setError(err.message || "Failed to load profile.");
+                setError(getErrorMessage(err, "Failed to load profile."));
             } finally {
                 setLoading(false);
             }
@@ -73,8 +78,8 @@ export default function ProfilePage() {
                 key_skills: cleanedProfile.key_skills.length ? cleanedProfile.key_skills : [""],
                 highlights: cleanedProfile.highlights.length ? cleanedProfile.highlights : [""]
             });
-        } catch (err: any) {
-            setError(err.message || "Failed to save profile.");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to save profile."));
         } finally {
             setSaving(false);
         }
@@ -264,7 +269,7 @@ export default function ProfilePage() {
                                     <div className="flex items-center justify-between">
                                         <label className="text-sm font-medium text-text-secondary">Key Highlights</label>
                                     </div>
-                                    <p className="text-xs text-text-muted">Specific impressive metrics, built systems, or achievements for the AI to dynamically adapt to the recruiter's company profile.</p>
+                                    <p className="text-xs text-text-muted">Specific impressive metrics, built systems, or achievements for the AI to dynamically adapt to the recruiter company profile.</p>
                                     {profile.highlights.map((highlight, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                             <input

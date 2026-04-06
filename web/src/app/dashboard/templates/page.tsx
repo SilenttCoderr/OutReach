@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus, Sparkles, Mail, Building } from "lucide-react";
+import { Plus, Sparkles, Mail, Building } from "lucide-react";
 
 const templates = [
     {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
-import { generateDrafts, checkAuthStatus } from "@/services/api";
+import { generateDrafts, checkAuthStatus, getGoogleAuthUrl } from "@/services/api";
 import Link from "next/link";
 
 export default function CampaignsPage() {
@@ -12,12 +12,14 @@ export default function CampaignsPage() {
     const [result, setResult] = useState<{ success: number, failed: number } | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [gmailConnected, setGmailConnected] = useState<boolean | null>(null); // null = loading
+    const googleAuthUrl = getGoogleAuthUrl();
 
     useEffect(() => {
-        checkAuthStatus().then((status) => {
-            // @ts-ignore
-            setGmailConnected(status.gmail_connected ?? false);
-        }).catch(() => setGmailConnected(false));
+        checkAuthStatus()
+            .then((status) => {
+                setGmailConnected(Boolean(status.gmail_connected));
+            })
+            .catch(() => setGmailConnected(false));
     }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,7 +29,7 @@ export default function CampaignsPage() {
     };
 
     const handleGenerate = async () => {
-        if (!gmailConnected) {
+        if (gmailConnected !== true) {
             setMessage({ type: 'error', text: 'Please connect your Gmail account first by logging in with Google.' });
             return;
         }
@@ -42,8 +44,9 @@ export default function CampaignsPage() {
             } else if (data.failed > 0) {
                 setMessage({ type: 'error', text: `${data.failed} draft(s) failed. Check your profile and contacts.` });
             }
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || "Failed to generate drafts. Please try again." });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to generate drafts. Please try again.";
+            setMessage({ type: 'error', text: message });
         } finally {
             setLoading(false);
         }
@@ -71,7 +74,7 @@ export default function CampaignsPage() {
                                     Emails are sent <strong>from your own Gmail account</strong>. You must sign in with Google to grant Gmail access. Email/password accounts cannot send emails.
                                 </p>
                                 <a
-                                    href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google`}
+                                    href={googleAuthUrl}
                                     className="btn-primary text-sm inline-flex items-center gap-2"
                                 >
                                     <ExternalLink className="w-4 h-4" />
@@ -193,8 +196,8 @@ export default function CampaignsPage() {
                     {/* Generate Button */}
                     <button
                         onClick={handleGenerate}
-                        disabled={loading || gmailConnected === false}
-                        className={`btn-primary w-full h-12 text-base font-semibold ${gmailConnected === false ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={loading || gmailConnected !== true}
+                        className={`btn-primary w-full h-12 text-base font-semibold ${gmailConnected !== true ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {loading ? (
                             <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</>
