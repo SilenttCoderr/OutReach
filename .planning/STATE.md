@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 02.1 Plan 01 complete; ready for Wave 2 execution (plans 02 and 03)
-last_updated: "2026-03-31T18:10:00.000Z"
-last_activity: 2026-03-31
+stopped_at: Phase 02.1 Plan 04 complete; Plans 05-07 pending
+last_updated: "2026-04-07T00:00:00.000Z"
+last_activity: 2026-04-07
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 20
-  completed_plans: 4
-  percent: 20
+  total_plans: 23
+  completed_plans: 7
+  percent: 30
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Users can reliably run end-to-end outreach campaigns in production without auth, billing, or email-delivery regressions during deploys.
-**Current focus:** Phase 02.1 - Frontend Refinement and Ship Readiness (Wave 2 next)
+**Current focus:** Phase 02.1 - Frontend Refinement and Ship Readiness (Plans 05-07 pending)
 
 ## Current Position
 
 Phase: 02.1 of 7 (frontend refinement and ship readiness)
-Plan: 01 complete, Wave 2 pending
+Plan: 01-04 complete, Plans 05-07 pending
 Status: Executing
 Last activity: 2026-04-07
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -68,6 +68,9 @@ Recent decisions affecting current work:
 - [2026-04-07]: Phase 02.1 inserted after Phase 2 for urgent frontend refinement and ship readiness.
 - [2026-04-07]: Phase 02.1 planned with 4 plans across 3 waves.
 - [2026-04-07]: Phase 02.1 Plan 01 executed and verified (lint + build passing).
+- [2026-04-07]: Phase 02.1 Plans 02 and 03 executed and verified (shared public shell + dashboard refinement).
+- [2026-04-07]: Phase 02.1 UI review converted into revamp planning extension; Plans 04-06 added for accessibility/state/design fixes and release gates moved to Plan 07.
+- [2026-04-07]: Phase 02.1 Plan 04 executed and verified (accessible icon/switch primitives integrated into dashboard controls).
 
 ### Pending Todos
 
