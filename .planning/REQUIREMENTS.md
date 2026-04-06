@@ -35,8 +35,8 @@
 
 ### Delivery Quality
 
-- [ ] **QUAL-01**: CI validates backend tests, frontend lint/build, and critical smoke checks before merge.
-- [ ] **QUAL-02**: Regression tests cover register/login, upload->draft->send flow, and Stripe webhook credit updates.
+- [x] **QUAL-01**: CI validates backend tests, frontend lint/build, and critical smoke checks before merge.
+- [x] **QUAL-02**: Regression tests cover register/login, upload->draft->send flow, and Stripe webhook credit updates.
 - [ ] **QUAL-03**: Dependency compatibility checks guard known fragile combinations (for example passlib/bcrypt).
 
 ## v2 Requirements
@@ -75,8 +75,8 @@
 | RELY-02 | Phase 5 | Pending |
 | RELY-03 | Phase 5 | Pending |
 | RELY-04 | Phase 6 | Pending |
-| QUAL-01 | Phase 6 | Pending |
-| QUAL-02 | Phase 6 | Pending |
+| QUAL-01 | Phase 6 | Complete |
+| QUAL-02 | Phase 6 | Complete |
 | QUAL-03 | Phase 1 | Complete |
 
 **Coverage:**

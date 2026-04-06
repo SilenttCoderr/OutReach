@@ -62,7 +62,7 @@ Plans:
   2. Dashboard core workflows (contacts -> drafts -> send + profile updates) have stable state handling and no type/lint bypasses.
   3. Frontend CI gates enforce lint/build/smoke checks before merge.
   4. Launch checklist includes explicit frontend UAT sign-off against deployed environment.
-**Plans:** 7 plans
+**Plans:** 6/7 plans executed
 
 Plans:
 - [x] 02.1-01-PLAN.md - Harden frontend API/session boundary and auth/checkout behavior
@@ -70,7 +70,7 @@ Plans:
 - [x] 02.1-03-PLAN.md - Polish dashboard workflows and shell behavior
 - [x] 02.1-04-PLAN.md - Harden accessibility semantics for icon-only and binary dashboard controls
 - [x] 02.1-05-PLAN.md - Add shared state messaging and destructive-flow safety guards
-- [ ] 02.1-06-PLAN.md - Consolidate visual token usage and add style guard automation
+- [x] 02.1-06-PLAN.md - Consolidate visual token usage and add style guard automation
 - [ ] 02.1-07-PLAN.md - Add frontend release gates, smoke tests, and UAT sign-off
 
 ### Phase 3: Data and Pipeline Cohesion
@@ -140,7 +140,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Baseline and Deployment Contracts | 3/3 | Complete    | 2026-03-31 |
 | 2. Backend Modularization Pass | 0/3 | Not started | - |
-| 2.1. Frontend Refinement and Ship Readiness | 5/7 | In Progress | - |
+| 2.1. Frontend Refinement and Ship Readiness | 6/7 | In Progress | - |
 | 3. Data and Pipeline Cohesion | 0/2 | Not started | - |
 | 4. Security and Auth Hardening | 0/3 | Not started | - |
 | 5. Observability and Runtime Reliability | 0/2 | Not started | - |
