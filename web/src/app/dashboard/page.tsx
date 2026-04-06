@@ -12,10 +12,10 @@ import {
     Plus,
     Upload,
     Sparkles,
-    CheckCircle,
     Clock
 } from "lucide-react";
 import { fetchStats, checkAuthStatus, type Stats } from "@/services/api";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function DashboardPage() {
     return (
@@ -35,6 +35,7 @@ function DashboardContent() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info" | "success"; message: string } | null>(null);
 
     useEffect(() => {
         if (searchParams.get("payment") === "success") {
@@ -44,6 +45,7 @@ function DashboardContent() {
 
         async function loadData() {
             try {
+                setStatusMessage(null);
                 const authData = await checkAuthStatus();
                 if (!authData.authenticated) {
                     router.push("/login");
@@ -51,8 +53,11 @@ function DashboardContent() {
                 }
                 const statsData = await fetchStats();
                 setStats(statsData);
-            } catch (error) {
-                console.error("Failed to load dashboard:", error);
+            } catch {
+                setStatusMessage({
+                    type: "error",
+                    message: "We could not load dashboard stats. Please refresh or try again in a minute.",
+                });
             } finally {
                 setLoading(false);
             }
@@ -102,12 +107,21 @@ function DashboardContent() {
 
     return (
         <div className="page-container animate-in">
+            {statusMessage && (
+                <StatusBanner
+                    type={statusMessage.type}
+                    message={statusMessage.message}
+                    className="mb-6"
+                />
+            )}
+
             {/* Payment Success Banner */}
             {paymentSuccess && (
-                <div className="mb-6 p-4 rounded-lg bg-success/10 border border-success/30 flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-success" />
-                    <span className="text-success font-medium">Payment successful! Credits have been added.</span>
-                </div>
+                <StatusBanner
+                    type="success"
+                    message="Payment successful! Credits have been added."
+                    className="mb-6"
+                />
             )}
 
             {/* Header */}

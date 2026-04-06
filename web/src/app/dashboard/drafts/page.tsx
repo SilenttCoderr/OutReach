@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, Send, ExternalLink, Loader2, CheckCircle, AlertCircle, Rocket } from "lucide-react";
+import { Mail, Send, ExternalLink, Loader2, Rocket } from "lucide-react";
 import { fetchDrafts, sendDraft, sendAllDrafts, type EmailLog } from "@/services/api";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function DraftsPage() {
     const [drafts, setDrafts] = useState<EmailLog[]>([]);
@@ -23,8 +24,8 @@ export default function DraftsPage() {
                 const updatedSelection = data.find((draft) => draft.id === prev.id);
                 return updatedSelection || data[0] || null;
             });
-        } catch (error) {
-            console.error(error);
+        } catch {
+            setMessage({ type: "error", text: "Failed to load drafts. Please refresh and try again." });
         }
     }, []);
 
@@ -87,18 +88,11 @@ export default function DraftsPage() {
 
             {/* Message */}
             {message && (
-                <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${message.type === 'success'
-                        ? 'bg-success/10 border border-success/30'
-                        : 'bg-error/10 border border-error/30'
-                    }`}>
-                    {message.type === 'success'
-                        ? <CheckCircle className="w-5 h-5 text-success" />
-                        : <AlertCircle className="w-5 h-5 text-error" />
-                    }
-                    <span className={message.type === 'success' ? 'text-success' : 'text-error'}>
-                        {message.text}
-                    </span>
-                </div>
+                <StatusBanner
+                    type={message.type}
+                    message={message.text}
+                    className="mb-6"
+                />
             )}
 
             {/* Content */}

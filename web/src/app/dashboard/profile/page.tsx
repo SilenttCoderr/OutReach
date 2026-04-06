@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchProfile, upsertProfile, type UserProfile, checkAuthStatus } from "@/services/api";
 import { Save, Plus, X, UserCircle } from "lucide-react";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback;
@@ -149,15 +150,11 @@ export default function ProfilePage() {
 
             <div className="max-w-3xl">
                 {error && (
-                    <div className="mb-6 p-4 rounded-lg bg-error/10 border border-error text-error text-sm">
-                        {error}
-                    </div>
+                    <StatusBanner type="error" message={error} className="mb-6" />
                 )}
                 
                 {success && (
-                    <div className="mb-6 p-4 rounded-lg bg-success/10 border border-success text-success text-sm">
-                        Profile saved successfully!
-                    </div>
+                    <StatusBanner type="success" message="Profile saved successfully!" className="mb-6" />
                 )}
 
                 <div className="card">
