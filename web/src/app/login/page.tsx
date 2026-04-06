@@ -1,16 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
 import { getGoogleAuthUrl, loginWithEmail, setAuthToken } from "@/services/api";
 import { AuthCard } from "@/components/ui/auth-card";
+import { StatusBanner } from "@/components/ui/status-banner";
 
-export default function LoginPage() {
+function getSafeRedirectPath(candidate: string | null): string {
+    if (!candidate) {
+        return "/dashboard";
+    }
+
+    if (!candidate.startsWith("/") || candidate.startsWith("//")) {
+        return "/dashboard";
+    }
+
+    return candidate;
+}
+
+function LoginForm() {
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    const reason = searchParams.get("reason");
+    const oauthError = searchParams.get("error");
+    const nextPath = getSafeRedirectPath(searchParams.get("next"));
 
     const handleGoogleLogin = () => {
         window.location.assign(getGoogleAuthUrl());
@@ -27,7 +46,7 @@ export default function LoginPage() {
         try {
             const { access_token } = await loginWithEmail(email, password);
             setAuthToken(access_token);
-            window.location.assign("/dashboard");
+            window.location.assign(nextPath);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Invalid email or password");
         } finally {
@@ -45,6 +64,22 @@ export default function LoginPage() {
                 >
                     <MoveLeft className="w-4 h-4 mr-2" /> Back to Home
                 </Link>
+
+                {reason === "checkout_required" && (
+                    <StatusBanner
+                        type="info"
+                        message="Please sign in to continue checkout for credits."
+                        className="mb-4"
+                    />
+                )}
+
+                {oauthError && (
+                    <StatusBanner
+                        type="error"
+                        message={decodeURIComponent(oauthError)}
+                        className="mb-4"
+                    />
+                )}
 
                 <AuthCard
                     title="Welcome Back"
@@ -135,5 +170,13 @@ export default function LoginPage() {
                 </AuthCard>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-bg-base" />}>
+            <LoginForm />
+        </Suspense>
     );
 }

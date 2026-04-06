@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { User, CreditCard, Bell, Shield } from "lucide-react";
 import { checkAuthStatus } from "@/services/api";
+import { ConfirmActionDialog } from "@/components/ui/confirm-action-dialog";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function SettingsPage() {
     const [userEmail, setUserEmail] = useState<string>("");
     const [credits, setCredits] = useState<number>(0);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info" | "success"; message: string } | null>(null);
 
     useEffect(() => {
         checkAuthStatus().then(data => {
@@ -16,6 +20,14 @@ export default function SettingsPage() {
             }
         });
     }, []);
+
+    const handleConfirmDelete = async () => {
+        setShowDeleteConfirm(false);
+        setStatusMessage({
+            type: "info",
+            message: "Delete account is not enabled yet. Please contact support to remove your account.",
+        });
+    };
 
     const sections = [
         {
@@ -55,6 +67,14 @@ export default function SettingsPage() {
                     <h1 className="section-title">Settings</h1>
                     <p className="section-description">Manage your account and preferences</p>
                 </div>
+
+                {statusMessage && (
+                    <StatusBanner
+                        type={statusMessage.type}
+                        message={statusMessage.message}
+                        className="mb-4"
+                    />
+                )}
 
                 {/* Sections */}
                 <div className="space-y-4">
@@ -99,13 +119,26 @@ export default function SettingsPage() {
                                     <p className="text-sm font-medium text-text-primary">Delete Account</p>
                                     <p className="text-xs text-text-muted">Permanently delete your data</p>
                                 </div>
-                                <button className="btn-ghost text-error border-error/30 hover:bg-error/10 text-sm">
+                                <button
+                                    type="button"
+                                    className="btn-ghost text-error border-error/30 hover:bg-error/10 text-sm"
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                >
                                     Delete
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <ConfirmActionDialog
+                    open={showDeleteConfirm}
+                    title="Delete account"
+                    description="This action is irreversible. Are you sure you want to continue?"
+                    confirmLabel="Delete account"
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    onConfirm={handleConfirmDelete}
+                />
             </div>
         </div>
     );
