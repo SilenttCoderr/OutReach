@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, Bell, User, Menu } from "lucide-react";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface HeaderProps {
     onOpenMenu?: () => void;
@@ -11,14 +12,13 @@ export function Header({ onOpenMenu }: HeaderProps) {
         <header className="h-16 bg-bg-surface border-b border-border px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 gap-3">
             {/* Search */}
             <div className="flex items-center gap-2 md:gap-3 w-full">
-                <button
-                    type="button"
+                <IconButton
                     onClick={onOpenMenu}
-                    className="lg:hidden p-2 rounded-lg hover:bg-bg-elevated transition-colors"
-                    aria-label="Open navigation menu"
+                    className="lg:hidden"
+                    label="Open navigation menu"
                 >
                     <Menu className="w-5 h-5 text-text-secondary" />
-                </button>
+                </IconButton>
 
                 <div className="relative hidden md:block w-56 lg:w-80">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -36,17 +36,17 @@ export function Header({ onOpenMenu }: HeaderProps) {
             {/* Right side */}
             <div className="flex items-center gap-2 md:gap-3">
                 {/* Notifications */}
-                <button className="relative p-2 rounded-lg hover:bg-bg-elevated transition-colors" aria-label="Notifications">
+                <IconButton className="relative" label="Notifications">
                     <Bell className="w-5 h-5 text-text-secondary" />
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full" />
-                </button>
+                </IconButton>
 
                 {/* User */}
-                <button className="flex items-center gap-3 p-2 rounded-lg hover:bg-bg-elevated transition-colors" aria-label="Profile">
+                <IconButton className="p-1" label="Profile">
                     <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
                         <User className="w-4 h-4 text-accent" />
                     </div>
-                </button>
+                </IconButton>
             </div>
         </header>
     );

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
 import { generateDrafts, checkAuthStatus, getGoogleAuthUrl } from "@/services/api";
 import Link from "next/link";
+import { SwitchField } from "@/components/ui/switch-field";
 
 export default function CampaignsPage() {
     const [useLLM, setUseLLM] = useState(true);
@@ -115,14 +116,11 @@ export default function CampaignsPage() {
                                 </div>
                             </div>
 
-                            <button
-                                onClick={() => setUseLLM(!useLLM)}
-                                className={`relative w-12 h-6 rounded-full transition-colors ${useLLM ? 'bg-accent' : 'bg-bg-elevated'
-                                    }`}
-                            >
-                                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${useLLM ? 'left-6' : 'left-0.5'
-                                    }`} />
-                            </button>
+                            <SwitchField
+                                checked={useLLM}
+                                onCheckedChange={setUseLLM}
+                                label="AI personalization"
+                            />
                         </div>
                     </div>
 

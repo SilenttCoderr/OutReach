@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Upload, CheckCircle, AlertCircle, Users, Search, Plus, X } from "lucide-react";
 import { uploadCSV, fetchContacts, addManualContact, type Recruiter, type ManualContactPayload } from "@/services/api";
+import { IconButton } from "@/components/ui/icon-button";
 
 export default function ContactsPage() {
     const [contacts, setContacts] = useState<Recruiter[]>([]);
@@ -209,12 +210,13 @@ export default function ContactsPage() {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
                     <div className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
-                        <button 
+                        <IconButton
                             onClick={() => setIsModalOpen(false)}
-                            className="absolute right-4 top-4 text-text-muted hover:text-text-primary transition-colors"
+                            className="absolute right-4 top-4"
+                            label="Close add contact dialog"
                         >
                             <X className="w-5 h-5" />
-                        </button>
+                        </IconButton>
                         
                         <h2 className="text-xl font-bold text-text-primary mb-1">Add Contact</h2>
                         <p className="text-sm text-text-muted mb-6">Manually add a prospect to your list.</p>

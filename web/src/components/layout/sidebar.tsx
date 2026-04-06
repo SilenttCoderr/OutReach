@@ -15,6 +15,7 @@ import {
     UserCircle
 } from "lucide-react";
 import { logout } from "@/services/api";
+import { IconButton } from "@/components/ui/icon-button";
 
 const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -51,14 +52,12 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                 </div>
 
                 {isMobile && (
-                    <button
-                        type="button"
-                        className="p-2 rounded-lg hover:bg-bg-elevated transition-colors"
+                    <IconButton
                         onClick={onClose}
-                        aria-label="Close navigation menu"
+                        label="Close navigation menu"
                     >
                         <X className="w-5 h-5 text-text-secondary" />
-                    </button>
+                    </IconButton>
                 )}
             </div>
 
