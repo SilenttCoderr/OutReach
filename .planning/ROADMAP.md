@@ -13,6 +13,7 @@ This roadmap upgrades OutreachPro from a fast-moving brownfield codebase to a pr
 - [x] **Phase 1: Baseline and Deployment Contracts** - Establish production baselines, env contracts, and target clean architecture boundaries.
  (completed 2026-03-31)
 - [ ] **Phase 2: Backend Modularization Pass** - Decompose `app.py` orchestration into modular service and router layers.
+- [ ] **Phase 2.1: Frontend Refinement and Ship Readiness (INSERTED)** - Refine UI quality, harden UX flows, and add frontend release gates.
 - [ ] **Phase 3: Data and Pipeline Cohesion** - Unify tracking/state flows and stabilize send pipeline behavior.
 - [ ] **Phase 4: Security and Auth Hardening** - Harden token, secret, OAuth, and auth endpoint behavior.
 - [ ] **Phase 5: Observability and Runtime Reliability** - Add structured logging, dependency-aware health, and operational visibility.
@@ -50,6 +51,24 @@ Plans:
 - [ ] 02-01: Extract route groups and shared dependencies
 - [ ] 02-02: Introduce application service layer for campaign/auth/billing orchestration
 - [ ] 02-03: Refactor integration adapters behind infrastructure boundaries
+
+### Phase 02.1: Frontend Refinement and Ship Readiness (INSERTED)
+
+**Goal**: Refine public and dashboard UX into a release-ready frontend with automated quality gates for critical user flows.
+**Requirements**: [DEPL-02, DEPL-03, QUAL-01, QUAL-02]
+**Depends on:** Phase 2
+**Success Criteria** (what must be TRUE):
+  1. Public marketing/auth pages are visually consistent, responsive, and lint-clean.
+  2. Dashboard core workflows (contacts -> drafts -> send + profile updates) have stable state handling and no type/lint bypasses.
+  3. Frontend CI gates enforce lint/build/smoke checks before merge.
+  4. Launch checklist includes explicit frontend UAT sign-off against deployed environment.
+**Plans:** 4 plans
+
+Plans:
+- [ ] 02.1-01-PLAN.md - Harden frontend API/session boundary and auth/checkout behavior
+- [ ] 02.1-02-PLAN.md - Refine public marketing and auth UI consistency
+- [ ] 02.1-03-PLAN.md - Polish dashboard workflows and shell behavior
+- [ ] 02.1-04-PLAN.md - Add frontend release gates, smoke tests, and UAT sign-off
 
 ### Phase 3: Data and Pipeline Cohesion
 **Goal**: Remove mixed legacy/modern tracking ambiguity and make send pipeline state transitions consistent.
@@ -112,12 +131,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Baseline and Deployment Contracts | 3/3 | Complete    | 2026-03-31 |
 | 2. Backend Modularization Pass | 0/3 | Not started | - |
+| 2.1. Frontend Refinement and Ship Readiness | 0/4 | Not started | - |
 | 3. Data and Pipeline Cohesion | 0/2 | Not started | - |
 | 4. Security and Auth Hardening | 0/3 | Not started | - |
 | 5. Observability and Runtime Reliability | 0/2 | Not started | - |
