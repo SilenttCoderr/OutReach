@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Sparkles, Database, ShieldCheck, Zap, Check, Star } from "lucide-react";
+import { MarketingHeader } from "@/components/layout/marketing_header";
+import { MarketingFooter } from "@/components/layout/marketing_footer";
 
 const pricingPreview = [
   { credits: 25, price: 3, perEmail: "0.12" },
@@ -34,26 +36,7 @@ const testimonials = [
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-bg-base">
-      {/* Navbar */}
-      <header className="fixed top-0 w-full z-50 border-b border-border bg-bg-base/95 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-lg text-text-primary">OutreachPro</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-text-secondary">
-            <Link href="#features" className="hover:text-text-primary transition-colors">Features</Link>
-            <Link href="/pricing" className="hover:text-text-primary transition-colors">Pricing</Link>
-            <Link href="/docs" className="hover:text-text-primary transition-colors">Docs</Link>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="btn-ghost text-sm">Login</Link>
-            <Link href="/signup" className="btn-primary text-sm">Get Started</Link>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader activePath="/" />
 
       <main className="flex-1 pt-32 pb-20">
         {/* Hero */}
@@ -154,7 +137,7 @@ export default function Home() {
                     <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                <p className="text-text-secondary mb-4">"{t.text}"</p>
+                <p className="text-text-secondary mb-4">&ldquo;{t.text}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-sm font-medium text-accent">
                     {t.avatar}
@@ -211,7 +194,7 @@ export default function Home() {
               Ready to 10x Your Outreach?
             </h2>
             <p className="text-text-secondary mb-8 max-w-lg mx-auto">
-              Join thousands of professionals who've already transformed their cold email game.
+              Join thousands of professionals who have already transformed their cold email game.
             </p>
             <Link href="/signup" className="btn-primary text-base py-3 px-8 inline-flex">
               Get Started Free <ArrowRight className="w-4 h-4" />
@@ -220,24 +203,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-text-primary">OutreachPro</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-text-secondary">
-            <Link href="/pricing" className="hover:text-text-primary transition-colors">Pricing</Link>
-            <Link href="/docs" className="hover:text-text-primary transition-colors">Docs</Link>
-            <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
-          </div>
-          <p className="text-sm text-text-muted">© 2026 OutreachPro</p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

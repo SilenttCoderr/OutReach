@@ -1,26 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { MoveLeft, Zap } from "lucide-react";
+import { MarketingHeader } from "@/components/layout/marketing_header";
+import { MarketingFooter } from "@/components/layout/marketing_footer";
 
 export default function TermsPage() {
     return (
         <div className="min-h-screen bg-bg-base">
-            <header className="border-b border-border bg-bg-base/95">
-                <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <Link href="/" className="inline-flex items-center text-sm text-text-secondary hover:text-text-primary transition-colors">
-                        <MoveLeft className="w-4 h-4 mr-2" /> Back to Home
-                    </Link>
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                            <Zap className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="font-bold text-text-primary">OutreachPro</span>
-                    </Link>
-                </div>
-            </header>
+            <MarketingHeader activePath="/terms" showFeaturesLink={false} />
 
-            <main className="max-w-3xl mx-auto px-6 py-12">
+            <main className="max-w-3xl mx-auto px-6 py-24">
                 <h1 className="text-3xl font-bold text-text-primary mb-2">Terms of Service</h1>
                 <p className="text-text-muted text-sm mb-10">Last updated: January 2026</p>
 
@@ -80,6 +69,8 @@ export default function TermsPage() {
                     <Link href="/" className="text-text-muted hover:text-text-primary">Home</Link>
                 </div>
             </main>
+
+            <MarketingFooter />
         </div>
     );
 }

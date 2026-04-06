@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MoveLeft, Zap } from "lucide-react";
+import { MoveLeft } from "lucide-react";
 import { getGoogleAuthUrl, loginWithEmail, setAuthToken } from "@/services/api";
+import { AuthCard } from "@/components/ui/auth-card";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -45,16 +46,10 @@ export default function LoginPage() {
                     <MoveLeft className="w-4 h-4 mr-2" /> Back to Home
                 </Link>
 
-                {/* Card */}
-                <div className="card p-8 space-y-8">
-                    {/* Header */}
-                    <div className="text-center space-y-3">
-                        <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mx-auto">
-                            <Zap className="w-7 h-7 text-white" />
-                        </div>
-                        <h1 className="text-2xl font-bold text-text-primary">Welcome Back</h1>
-                        <p className="text-text-secondary text-sm">Sign in to manage your campaigns</p>
-                    </div>
+                <AuthCard
+                    title="Welcome Back"
+                    description="Sign in to manage your campaigns"
+                >
 
                     {/* Google Login */}
                     <button
@@ -137,7 +132,7 @@ export default function LoginPage() {
                         Do not have an account?{" "}
                         <Link href="/signup" className="text-accent hover:underline font-medium">Sign up</Link>
                     </p>
-                </div>
+                </AuthCard>
             </div>
         </div>
     );

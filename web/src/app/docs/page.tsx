@@ -15,6 +15,8 @@ import {
     Copy,
     Check
 } from "lucide-react";
+import { MarketingHeader } from "@/components/layout/marketing_header";
+import { MarketingFooter } from "@/components/layout/marketing_footer";
 
 const sections = [
     { id: "getting-started", label: "Getting Started", icon: Rocket },
@@ -36,26 +38,7 @@ export default function DocsPage() {
 
     return (
         <div className="min-h-screen bg-bg-base">
-            {/* Navbar */}
-            <header className="fixed top-0 w-full z-50 border-b border-border bg-bg-base/95 backdrop-blur-sm">
-                <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
-                            <Zap className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="font-bold text-lg text-text-primary">OutreachPro</span>
-                    </Link>
-                    <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-text-secondary">
-                        <Link href="/#features" className="hover:text-text-primary transition-colors">Features</Link>
-                        <Link href="/pricing" className="hover:text-text-primary transition-colors">Pricing</Link>
-                        <Link href="/docs" className="text-text-primary">Docs</Link>
-                    </nav>
-                    <div className="flex items-center gap-3">
-                        <Link href="/login" className="btn-ghost text-sm">Login</Link>
-                        <Link href="/signup" className="btn-primary text-sm">Get Started</Link>
-                    </div>
-                </div>
-            </header>
+            <MarketingHeader activePath="/docs" />
 
             <div className="flex pt-16">
                 {/* Sidebar */}
@@ -111,7 +94,7 @@ export default function DocsPage() {
                             <div className="card p-6 space-y-4">
                                 <h2 className="text-xl font-semibold text-text-primary">Step 1: Sign Up</h2>
                                 <p className="text-text-secondary">
-                                    Create an account using your Google account. You'll get 10 free credits to start.
+                                    Create an account using your Google account. You will get 10 free credits to start.
                                 </p>
                                 <Link href="/signup" className="btn-primary inline-flex text-sm">
                                     Create Account <ChevronRight className="w-4 h-4" />
@@ -177,12 +160,12 @@ export default function DocsPage() {
                                             <tr className="table-row">
                                                 <td className="px-4 py-3 font-mono text-accent">recruiter_email</td>
                                                 <td className="px-4 py-3"><span className="badge badge-error">Required</span></td>
-                                                <td className="px-4 py-3 text-text-secondary">Recipient's email address</td>
+                                                <td className="px-4 py-3 text-text-secondary">Recipient email address</td>
                                             </tr>
                                             <tr className="table-row">
                                                 <td className="px-4 py-3 font-mono text-accent">recruiter_name</td>
                                                 <td className="px-4 py-3"><span className="badge badge-default">Optional</span></td>
-                                                <td className="px-4 py-3 text-text-secondary">Recipient's full name</td>
+                                                <td className="px-4 py-3 text-text-secondary">Recipient full name</td>
                                             </tr>
                                             <tr className="table-row">
                                                 <td className="px-4 py-3 font-mono text-accent">company</td>
@@ -248,7 +231,7 @@ jane@startup.io,Jane Doe,Startup Inc,CTO`}
                                         <span className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center shrink-0 font-semibold">1</span>
                                         <div>
                                             <p className="font-medium text-text-primary">Context Analysis</p>
-                                            <p className="text-sm text-text-secondary">AI reads your resume/context and the contact's info</p>
+                                            <p className="text-sm text-text-secondary">AI reads your resume/context and the contact information</p>
                                         </div>
                                     </li>
                                     <li className="flex gap-4">
@@ -282,7 +265,7 @@ jane@startup.io,Jane Doe,Startup Inc,CTO`}
                                 </p>
                                 <ul className="space-y-2 text-sm text-text-secondary">
                                     <li>• Your resume and professional background</li>
-                                    <li>• The recipient's company and role</li>
+                                    <li>• The recipient company and role</li>
                                     <li>• Industry-specific context</li>
                                     <li>• Best practices for cold outreach</li>
                                 </ul>
@@ -381,7 +364,7 @@ jane@startup.io,Jane Doe,Startup Inc,CTO`}
 
                                 <TroubleshootingItem
                                     title="Drafts not appearing in Gmail"
-                                    description="If generated drafts don't show up in your Gmail:"
+                                    description="If generated drafts do not show up in your Gmail:"
                                     steps={[
                                         "Check your Gmail Drafts folder (not inbox)",
                                         "Wait a few seconds and refresh Gmail",
@@ -391,7 +374,7 @@ jane@startup.io,Jane Doe,Startup Inc,CTO`}
 
                                 <TroubleshootingItem
                                     title="CSV upload fails"
-                                    description="If your CSV won't upload:"
+                                    description="If your CSV does not upload:"
                                     steps={[
                                         "Ensure the file is valid CSV format",
                                         "Check that 'recruiter_email' column exists",
@@ -425,6 +408,7 @@ jane@startup.io,Jane Doe,Startup Inc,CTO`}
                     )}
                 </main>
             </div>
+            <MarketingFooter />
         </div>
     );
 }

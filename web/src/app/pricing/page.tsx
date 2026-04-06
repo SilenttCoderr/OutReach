@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Zap, ArrowRight, HelpCircle } from "lucide-react";
+import { Check, ArrowRight, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { buyCredits } from "@/services/api";
+import { MarketingHeader } from "@/components/layout/marketing_header";
+import { MarketingFooter } from "@/components/layout/marketing_footer";
 
 const pricingPlans = [
     {
@@ -109,26 +111,7 @@ export default function PricingPage() {
 
     return (
         <div className="min-h-screen bg-bg-base">
-            {/* Navbar */}
-            <header className="fixed top-0 w-full z-50 border-b border-border bg-bg-base/95 backdrop-blur-sm">
-                <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
-                            <Zap className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="font-bold text-lg text-text-primary">OutreachPro</span>
-                    </Link>
-                    <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-text-secondary">
-                        <Link href="/#features" className="hover:text-text-primary transition-colors">Features</Link>
-                        <Link href="/pricing" className="text-text-primary">Pricing</Link>
-                        <Link href="/docs" className="hover:text-text-primary transition-colors">Docs</Link>
-                    </nav>
-                    <div className="flex items-center gap-3">
-                        <Link href="/login" className="btn-ghost text-sm">Login</Link>
-                        <Link href="/signup" className="btn-primary text-sm">Get Started</Link>
-                    </div>
-                </div>
-            </header>
+            <MarketingHeader activePath="/pricing" />
 
             <main className="pt-32 pb-20">
                 {/* Hero */}
@@ -268,23 +251,7 @@ export default function PricingPage() {
                 </section>
             </main>
 
-            {/* Footer */}
-            <footer className="border-t border-border py-8">
-                <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                            <Zap className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="font-bold text-text-primary">OutreachPro</span>
-                    </div>
-                    <div className="flex items-center gap-6 text-sm text-text-secondary">
-                        <Link href="/docs" className="hover:text-text-primary transition-colors">Docs</Link>
-                        <Link href="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
-                        <Link href="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
-                    </div>
-                    <p className="text-sm text-text-muted">© 2026 OutreachPro</p>
-                </div>
-            </footer>
+            <MarketingFooter />
         </div>
     );
 }

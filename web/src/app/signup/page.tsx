@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MoveLeft, Zap, Check } from "lucide-react";
+import { MoveLeft, Check } from "lucide-react";
 import { getGoogleAuthUrl, registerWithEmail, setAuthToken } from "@/services/api";
+import { AuthCard } from "@/components/ui/auth-card";
 
 export default function SignUpPage() {
     const [name, setName] = useState("");
@@ -50,16 +51,10 @@ export default function SignUpPage() {
                     <MoveLeft className="w-4 h-4 mr-2" /> Back to Home
                 </Link>
 
-                {/* Card */}
-                <div className="card p-8 space-y-8">
-                    {/* Header */}
-                    <div className="text-center space-y-3">
-                        <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mx-auto">
-                            <Zap className="w-7 h-7 text-white" />
-                        </div>
-                        <h1 className="text-2xl font-bold text-text-primary">Create Your Account</h1>
-                        <p className="text-text-secondary text-sm">Start sending personalized emails in minutes</p>
-                    </div>
+                <AuthCard
+                    title="Create Your Account"
+                    description="Start sending personalized emails in minutes"
+                >
 
                     {/* Benefits */}
                     <div className="space-y-3 p-4 bg-bg-elevated rounded-lg">
@@ -180,7 +175,7 @@ export default function SignUpPage() {
                         Already have an account?{" "}
                         <Link href="/login" className="text-accent hover:underline font-medium">Sign in</Link>
                     </p>
-                </div>
+                </AuthCard>
             </div>
         </div>
     );
