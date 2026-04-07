@@ -11,7 +11,7 @@ progress:
   completed_phases: 3
   total_plans: 13
   completed_plans: 13
-  percent: 100
+  percent: 43
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 01-07 complete
 Status: Ready for next phase planning
 Last activity: 2026-04-08
 
-Progress: [██████████] 100%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
     LayoutDashboard,
     Users,
@@ -12,17 +13,21 @@ import {
     LogOut,
     X,
     Zap,
-    UserCircle
+    UserCircle,
+    Shield,
 } from "lucide-react";
-import { logout } from "@/services/api";
+import { checkAuthStatus, logout } from "@/services/api";
 import { IconButton } from "@/components/ui/icon-button";
 
-const navItems = [
+const workspaceNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/contacts", label: "Contacts", icon: Users },
     { href: "/dashboard/campaigns", label: "Campaigns", icon: Send },
     { href: "/dashboard/drafts", label: "Drafts", icon: Mail },
     { href: "/dashboard/templates", label: "Templates", icon: FileText },
+];
+
+const preferenceNavItems = [
     { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -34,6 +39,31 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     const pathname = usePathname();
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        async function loadAuthStatus() {
+            try {
+                const status = await checkAuthStatus();
+                setIsAdmin(Boolean(status.is_admin));
+            } catch {
+                setIsAdmin(false);
+            }
+        }
+
+        void loadAuthStatus();
+    }, []);
+
+    const preferences = useMemo(() => {
+        if (!isAdmin) {
+            return preferenceNavItems;
+        }
+
+        return [
+            { href: "/dashboard/admin", label: "Admin", icon: Shield },
+            ...preferenceNavItems,
+        ];
+    }, [isAdmin]);
 
     const handleLogout = () => {
         logout();
@@ -65,7 +95,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
             <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
                 <div className="space-y-1">
                     <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Workspace</p>
-                    {navItems.slice(0, 5).map((item) => {
+                    {workspaceNavItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
                             <Link
@@ -87,7 +117,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
                 <div className="space-y-1">
                     <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Preferences</p>
-                    {navItems.slice(5).map((item) => {
+                    {preferences.map((item) => {
                         const isActive = pathname === item.href;
                         return (
                             <Link

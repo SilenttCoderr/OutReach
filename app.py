@@ -11,11 +11,13 @@ from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.api.dependencies import limiter
+from src.api.routes_admin import router as admin_router
 from src.api.routes_campaigns import router as campaigns_router
 from src.api.routes_contacts import router as contacts_router
 from src.api.routes_profile import router as profile_router
 from src.auth import get_current_user
 from src.auth_routes import router as auth_router
+from src.config import is_admin_email
 from src.config import validate_startup_configuration
 from src.database import Base, engine
 from src.models import User
@@ -95,6 +97,7 @@ app.include_router(stripe_router, prefix="/api")
 app.include_router(campaigns_router, prefix="/api")
 app.include_router(contacts_router, prefix="/api")
 app.include_router(profile_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 
 @app.get("/")
@@ -114,6 +117,7 @@ async def auth_status(user: Optional[User] = Depends(get_current_user)):
         "email": user.email,
         "credits": user.credits,
         "gmail_connected": bool(user.access_token),
+        "is_admin": is_admin_email(user.email),
     }
 
 

@@ -30,6 +30,7 @@ This checklist ensures a smooth production deployment of OutreachPro.
   | `JWT_SECRET` | JWT signing secret | `openssl rand -hex 32` |
   | `SESSION_SECRET` | OAuth session secret | `openssl rand -hex 32` |
   | `FRONTEND_URL` | Your frontend URL | `https://outreachpro.io` |
+  | `ADMIN_EMAIL` | Your admin account email for dashboard admin access | `you@yourdomain.com` |
   | `GOOGLE_CLIENT_ID` | OAuth client ID | `xxx.apps.googleusercontent.com` |
   | `GOOGLE_CLIENT_SECRET` | OAuth client secret | `GOCSPX-xxx` |
   | `GEMINI_API_KEY` | Gemini API key | `AIzaSy...` |

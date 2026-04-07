@@ -59,7 +59,7 @@ async function parseErrorMessage(response: Response, fallback: string): Promise<
 async function requestJson<T>(
     path: string,
     options: {
-        method?: "GET" | "POST" | "PUT" | "DELETE";
+        method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
         requiresAuth?: boolean;
         json?: boolean;
         body?: BodyInit | null;
@@ -149,6 +149,33 @@ export interface AuthStatus {
     email?: string;
     credits?: number;
     gmail_connected?: boolean;
+    is_admin?: boolean;
+}
+
+export interface AdminMetrics {
+    total_users: number;
+    live_accounts_30d: number;
+    gmail_connected_accounts: number;
+    total_contacts: number;
+    total_sent_emails: number;
+    total_draft_emails: number;
+    total_credits: number;
+}
+
+export interface AdminUserAccount {
+    id: number;
+    email: string;
+    name?: string | null;
+    credits: number;
+    gmail_connected: boolean;
+    is_live: boolean;
+    created_at?: string | null;
+    last_login?: string | null;
+}
+
+export interface AdminOverview {
+    metrics: AdminMetrics;
+    users: AdminUserAccount[];
 }
 
 export interface DraftGenerationResponse {
@@ -316,7 +343,7 @@ export async function registerWithEmail(name: string, email: string, password: s
 export async function checkAuthStatus(): Promise<AuthStatus> {
     const token = getStoredToken();
     if (!token) {
-        return { authenticated: false, gmail_connected: false };
+        return { authenticated: false, gmail_connected: false, is_admin: false };
     }
 
     try {
@@ -326,7 +353,7 @@ export async function checkAuthStatus(): Promise<AuthStatus> {
             redirectOnUnauthorized: false,
         });
     } catch {
-        return { authenticated: false, gmail_connected: false };
+        return { authenticated: false, gmail_connected: false, is_admin: false };
     }
 }
 
@@ -454,4 +481,28 @@ export async function upsertProfile(profile: Partial<UserProfile>): Promise<User
     }
 
     return normalizeProfile(response);
+}
+
+export async function fetchAdminOverview(): Promise<AdminOverview> {
+    return requestJson<AdminOverview>("/admin/overview", {
+        requiresAuth: true,
+        json: true,
+        fallbackError: "Failed to fetch admin overview",
+        redirectOnUnauthorized: false,
+    });
+}
+
+export async function updateUserCredits(
+    userId: number,
+    operation: "add" | "set",
+    amount: number,
+): Promise<AdminUserAccount> {
+    return requestJson<AdminUserAccount>(`/admin/users/${userId}/credits`, {
+        method: "PATCH",
+        requiresAuth: true,
+        json: true,
+        body: JSON.stringify({ operation, amount }),
+        fallbackError: "Failed to update credits",
+        redirectOnUnauthorized: false,
+    });
 }

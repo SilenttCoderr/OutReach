@@ -4,6 +4,19 @@
 
 This roadmap upgrades OutreachPro from a fast-moving brownfield codebase to a production-hardened system with cleaner architecture boundaries, safer deployment practices on Vercel/Render, and stronger verification gates. The sequence prioritizes risk reduction first (baseline, contracts, and deployment safety), then executes modularization and reliability hardening in controlled phases.
 
+## Clean View
+
+### Completed Phases
+- Phase 1: Baseline and Deployment Contracts (complete)
+- Phase 2: Backend Modularization Pass (complete)
+- Phase 2.1: Frontend Refinement and Ship Readiness (complete)
+
+### Remaining Queue (Execution Order)
+1. Phase 3: Data and Pipeline Cohesion
+2. Phase 4: Security and Auth Hardening
+3. Phase 5: Observability and Runtime Reliability
+4. Phase 6: CI, Runbooks, and Release Safety
+
 ## Phases
 
 **Phase Numbering:**
@@ -12,7 +25,8 @@ This roadmap upgrades OutreachPro from a fast-moving brownfield codebase to a pr
 
 - [x] **Phase 1: Baseline and Deployment Contracts** - Establish production baselines, env contracts, and target clean architecture boundaries.
  (completed 2026-03-31)
-- [ ] **Phase 2: Backend Modularization Pass** - Decompose `app.py` orchestration into modular service and router layers.
+- [x] **Phase 2: Backend Modularization Pass** - Decompose `app.py` orchestration into modular service and router layers.
+ (completed 2026-04-01)
 - [x] **Phase 2.1: Frontend Refinement and Ship Readiness (INSERTED)** - Refine UI quality, harden UX flows, and add frontend release gates.
  (completed 2026-04-08)
 - [ ] **Phase 3: Data and Pipeline Cohesion** - Unify tracking/state flows and stabilize send pipeline behavior.
@@ -46,12 +60,12 @@ Plans:
   1. `app.py` acts as composition root with minimal business logic.
   2. Core flows are routed through modular services with clear interfaces.
   3. Existing endpoint contracts remain backward compatible for frontend clients.
-**Plans**: 3 plans
+**Plans**: 3/3 plans complete
 
 Plans:
-- [ ] 02-01: Extract route groups and shared dependencies
-- [ ] 02-02: Introduce application service layer for campaign/auth/billing orchestration
-- [ ] 02-03: Refactor integration adapters behind infrastructure boundaries
+- [x] 02-01: Extract route groups and shared dependencies
+- [x] 02-02: Introduce application service layer for campaign/auth/billing orchestration
+- [x] 02-03: Refactor integration adapters behind infrastructure boundaries
 
 ### Phase 02.1: Frontend Refinement and Ship Readiness (INSERTED)
 
@@ -140,7 +154,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Baseline and Deployment Contracts | 3/3 | Complete    | 2026-03-31 |
-| 2. Backend Modularization Pass | 0/3 | Not started | - |
+| 2. Backend Modularization Pass | 3/3 | Complete | 2026-04-01 |
 | 2.1. Frontend Refinement and Ship Readiness | 7/7 | Complete | 2026-04-08 |
 | 3. Data and Pipeline Cohesion | 0/2 | Not started | - |
 | 4. Security and Auth Hardening | 0/3 | Not started | - |

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.database import get_db
 from src.models import User
+from src.config import is_admin_email
 from src.auth import (
     oauth,
     create_access_token,
@@ -153,6 +154,7 @@ async def auth_status(user: User = Depends(get_current_user)):
             "email": user.email,
             "credits": user.credits,
             "gmail_connected": bool(user.access_token),
+            "is_admin": is_admin_email(user.email),
         }
     return {"authenticated": False, "gmail_connected": False}
 

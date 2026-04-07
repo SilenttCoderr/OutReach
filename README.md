@@ -71,6 +71,7 @@ npm run dev
 # App
 SECRET_KEY=your_secret_key
 FRONTEND_URL=http://localhost:3000
+ADMIN_EMAIL=you@yourdomain.com
 
 # Google Auth
 GOOGLE_CLIENT_ID=...
@@ -117,6 +118,7 @@ The `web/` directory is ready for Vercel deployment.
    | `JWT_SECRET` | ✅ | JWT signing key (run `openssl rand -hex 32`) |
    | `SESSION_SECRET` | ✅ | OAuth session key (run `openssl rand -hex 32`) |
    | `FRONTEND_URL` | ✅ | Your frontend URL (e.g., `https://outreachpro.io`) |
+   | `ADMIN_EMAIL` | ✅ | Your personal admin login email for `/dashboard/admin` access |
    | `GOOGLE_CLIENT_ID` | ✅ | OAuth Client ID from Google Cloud Console |
    | `GOOGLE_CLIENT_SECRET` | ✅ | OAuth Client Secret |
    | `GEMINI_API_KEY` | ✅ | API key from [AI Studio](https://aistudio.google.com/apikey) |
