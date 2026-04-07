@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, Users, Search, Plus, X } from "lucide-react";
-import { uploadCSV, fetchContacts, addManualContact, type Recruiter, type ManualContactPayload } from "@/services/api";
+import { Upload, Users, Search, Plus, X, Pencil, Trash2 } from "lucide-react";
+import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Recruiter, type ManualContactPayload } from "@/services/api";
 import { IconButton } from "@/components/ui/icon-button";
 import { StatusBanner } from "@/components/ui/status-banner";
 
@@ -15,6 +15,7 @@ export default function ContactsPage() {
     // Manual Contact State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [addingManual, setAddingManual] = useState(false);
+    const [editingContactId, setEditingContactId] = useState<string | null>(null);
     const [manualForm, setManualForm] = useState<ManualContactPayload>({
         recruiter_name: "",
         recruiter_email: "",
@@ -57,21 +58,70 @@ export default function ContactsPage() {
         }
     };
 
-    const handleAddManual = async (e: React.FormEvent) => {
+    const resetManualForm = () => {
+        setManualForm({ recruiter_name: "", recruiter_email: "", company: "", role: "" });
+        setEditingContactId(null);
+    };
+
+    const openAddModal = () => {
+        resetManualForm();
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (contact: Recruiter) => {
+        setManualForm({
+            recruiter_name: contact.recruiter_name || "",
+            recruiter_email: contact.recruiter_email || "",
+            company: contact.company || "",
+            role: contact.role || "",
+        });
+        setEditingContactId(String(contact.id || ""));
+        setIsModalOpen(true);
+    };
+
+    const handleSaveContact = async (e: React.FormEvent) => {
         e.preventDefault();
         setAddingManual(true);
         setMessage(null);
         try {
-            await addManualContact(manualForm);
-            setMessage({ type: 'success', text: `Added contact: ${manualForm.recruiter_name}` });
+            if (editingContactId) {
+                await updateContact(editingContactId, manualForm);
+                setMessage({ type: 'success', text: `Updated contact: ${manualForm.recruiter_name}` });
+            } else {
+                await addManualContact(manualForm);
+                setMessage({ type: 'success', text: `Added contact: ${manualForm.recruiter_name}` });
+            }
             setIsModalOpen(false);
-            setManualForm({ recruiter_name: "", recruiter_email: "", company: "", role: "" });
+            resetManualForm();
             await loadContacts();
         } catch (error: unknown) {
-            const messageText = error instanceof Error ? error.message : "Failed to add contact.";
+            const messageText = error instanceof Error ? error.message : "Failed to save contact.";
             setMessage({ type: 'error', text: messageText });
         } finally {
             setAddingManual(false);
+        }
+    };
+
+    const handleDeleteContact = async (contact: Recruiter) => {
+        const id = contact.id ? String(contact.id) : "";
+        if (!id) {
+            setMessage({ type: "error", text: "Cannot delete contact: missing contact id." });
+            return;
+        }
+
+        const confirmed = window.confirm(`Delete contact ${contact.recruiter_name || contact.recruiter_email}?`);
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            setMessage(null);
+            await deleteContact(id);
+            setMessage({ type: "success", text: "Contact deleted." });
+            await loadContacts();
+        } catch (error: unknown) {
+            const messageText = error instanceof Error ? error.message : "Failed to delete contact.";
+            setMessage({ type: "error", text: messageText });
         }
     };
 
@@ -92,7 +142,7 @@ export default function ContactsPage() {
 
                 <div className="flex items-center gap-2">
                     <button 
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openAddModal}
                         className="btn-secondary"
                         disabled={uploading}
                     >
@@ -131,13 +181,13 @@ export default function ContactsPage() {
 
             {/* Search */}
             <div className="mb-6 relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                 <input
                     type="text"
                     placeholder="Search contacts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="input pl-10"
+                    className="input pl-11"
                 />
             </div>
 
@@ -152,12 +202,13 @@ export default function ContactsPage() {
                                 <th className="px-6 py-3 text-left">Company</th>
                                 <th className="px-6 py-3 text-left">Role</th>
                                 <th className="px-6 py-3 text-left">Status</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredContacts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-16 text-center">
+                                    <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-12 h-12 rounded-xl bg-bg-elevated flex items-center justify-center">
                                                 <Users className="w-6 h-6 text-text-muted" />
@@ -180,7 +231,7 @@ export default function ContactsPage() {
                                                 <span className="font-medium text-text-primary">{contact.recruiter_name || "-"}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-text-secondary">{contact.recruiter_email}</td>
+                                        <td className="px-6 py-4 text-text-secondary">{contact.recruiter_email || "-"}</td>
                                         <td className="px-6 py-4 text-text-primary">{contact.company || "-"}</td>
                                         <td className="px-6 py-4 text-text-secondary">{contact.role || "-"}</td>
                                         <td className="px-6 py-4">
@@ -191,6 +242,22 @@ export default function ContactsPage() {
                                             }>
                                                 {contact.status || 'new'}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <IconButton
+                                                    onClick={() => openEditModal(contact)}
+                                                    label={`Edit ${contact.recruiter_name || contact.recruiter_email}`}
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </IconButton>
+                                                <IconButton
+                                                    onClick={() => void handleDeleteContact(contact)}
+                                                    label={`Delete ${contact.recruiter_name || contact.recruiter_email}`}
+                                                >
+                                                    <Trash2 className="w-4 h-4 text-status-error" />
+                                                </IconButton>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -205,17 +272,22 @@ export default function ContactsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
                     <div className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
                         <IconButton
-                            onClick={() => setIsModalOpen(false)}
+                            onClick={() => {
+                                setIsModalOpen(false);
+                                resetManualForm();
+                            }}
                             className="absolute right-4 top-4"
                             label="Close add contact dialog"
                         >
                             <X className="w-5 h-5" />
                         </IconButton>
                         
-                        <h2 className="text-xl font-bold text-text-primary mb-1">Add Contact</h2>
-                        <p className="text-sm text-text-muted mb-6">Manually add a prospect to your list.</p>
+                        <h2 className="text-xl font-bold text-text-primary mb-1">{editingContactId ? "Edit Contact" : "Add Contact"}</h2>
+                        <p className="text-sm text-text-muted mb-6">
+                            {editingContactId ? "Update this prospect record." : "Manually add a prospect to your list."}
+                        </p>
                         
-                        <form onSubmit={handleAddManual} className="flex flex-col gap-4">
+                        <form onSubmit={handleSaveContact} className="flex flex-col gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1">Name</label>
                                 <input 
@@ -261,7 +333,10 @@ export default function ContactsPage() {
                             <div className="flex justify-end gap-3 mt-4">
                                 <button 
                                     type="button" 
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => {
+                                        setIsModalOpen(false);
+                                        resetManualForm();
+                                    }}
                                     className="btn-secondary"
                                 >
                                     Cancel
@@ -271,7 +346,7 @@ export default function ContactsPage() {
                                     disabled={addingManual}
                                     className={`btn-primary ${addingManual ? 'opacity-70' : ''}`}
                                 >
-                                    {addingManual ? 'Adding...' : 'Add Contact'}
+                                    {addingManual ? (editingContactId ? 'Saving...' : 'Adding...') : (editingContactId ? 'Save Changes' : 'Add Contact')}
                                 </button>
                             </div>
                         </form>

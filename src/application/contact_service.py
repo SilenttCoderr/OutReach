@@ -73,33 +73,41 @@ def process_uploaded_contacts(db: Session, user: User, file_path: str) -> Dict[s
         raise
 
 
-def add_single_contact(db: Session, user: User, contact_data: Dict) -> Dict:
-    """Manually add a single contact to the database."""
-    email = contact_data.get("recruiter_email", "").strip()
-    if not email:
-        raise ValueError("Email is required")
-
-    existing = db.query(Contact).filter(Contact.user_id == user.id, Contact.email == email).first()
-    if existing:
-        raise ValueError("A contact with this email already exists")
-
-    new_contact = Contact(
-        user_id=user.id,
-        name=contact_data.get("recruiter_name", "").strip(),
-        email=email,
-        company=contact_data.get("company", "").strip(),
-        role=contact_data.get("role", "").strip(),
-        status="new"
+def update_contact(
+    db: Session,
+    user_id: int,
+    contact_id: int,
+    name: str,
+    email: str,
+    company: str,
+    role: str,
+) -> Contact | None:
+    contact = (
+        db.query(Contact)
+        .filter(Contact.user_id == user_id, Contact.id == contact_id)
+        .first()
     )
-    db.add(new_contact)
+    if not contact:
+        return None
+
+    contact.name = name
+    contact.email = email
+    contact.company = company
+    contact.role = role
     db.commit()
-    db.refresh(new_contact)
-    
-    return {
-        "id": new_contact.id,
-        "name": new_contact.name,
-        "email": new_contact.email,
-        "company": new_contact.company,
-        "role": new_contact.role,
-        "status": new_contact.status,
-    }
+    db.refresh(contact)
+    return contact
+
+
+def delete_contact(db: Session, user_id: int, contact_id: int) -> bool:
+    contact = (
+        db.query(Contact)
+        .filter(Contact.user_id == user_id, Contact.id == contact_id)
+        .first()
+    )
+    if not contact:
+        return False
+
+    db.delete(contact)
+    db.commit()
+    return True

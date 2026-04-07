@@ -10,12 +10,23 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback;
 }
 
+function hasSubmittedProfile(profile: UserProfile): boolean {
+    return Boolean(
+        profile.full_name.trim() ||
+        profile.current_title.trim() ||
+        profile.experience_summary.trim() ||
+        profile.key_skills.some((skill) => skill.trim()) ||
+        profile.highlights.some((highlight) => highlight.trim()),
+    );
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [viewMode, setViewMode] = useState(false);
 
     const [profile, setProfile] = useState<UserProfile>({
         full_name: "",
@@ -39,12 +50,14 @@ export default function ProfilePage() {
                     return;
                 }
                 const data = await fetchProfile();
-                setProfile({
+                const normalizedProfile: UserProfile = {
                     ...data,
                     // Ensure arrays have at least one empty string if empty
                     key_skills: data.key_skills?.length ? data.key_skills : [""],
                     highlights: data.highlights?.length ? data.highlights : [""]
-                });
+                };
+                setProfile(normalizedProfile);
+                setViewMode(hasSubmittedProfile(normalizedProfile));
             } catch (err: unknown) {
                 console.error("Failed to load profile:", err);
                 setError(getErrorMessage(err, "Failed to load profile."));
@@ -79,6 +92,7 @@ export default function ProfilePage() {
                 key_skills: cleanedProfile.key_skills.length ? cleanedProfile.key_skills : [""],
                 highlights: cleanedProfile.highlights.length ? cleanedProfile.highlights : [""]
             });
+            setViewMode(true);
         } catch (err: unknown) {
             setError(getErrorMessage(err, "Failed to save profile."));
         } finally {
@@ -139,6 +153,8 @@ export default function ProfilePage() {
         );
     }
 
+    const hasSavedData = hasSubmittedProfile(profile);
+
     return (
         <div className="page-container animate-in">
             <div className="section-header">
@@ -157,8 +173,81 @@ export default function ProfilePage() {
                     <StatusBanner type="success" message="Profile saved successfully!" className="mb-6" />
                 )}
 
-                <div className="card">
-                    <form onSubmit={handleSubmit} className="p-6 space-y-8">
+                {viewMode && hasSavedData && (
+                    <div className="card p-6 space-y-6 mb-6">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-semibold text-text-primary">{profile.full_name || "Profile"}</h2>
+                                <p className="text-text-secondary mt-1">
+                                    {[profile.current_title, profile.current_company].filter(Boolean).join(" at ") || "No title/company added yet"}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode(false)}
+                                className="btn-secondary"
+                            >
+                                Edit Profile
+                            </button>
+                        </div>
+
+                        <div>
+                            <h3 className="text-sm font-semibold text-text-primary mb-2">Education</h3>
+                            <p className="text-sm text-text-secondary">
+                                {[profile.degree, profile.university].filter(Boolean).join(" - ") || "No education details added yet"}
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-sm font-semibold text-text-primary mb-2">Experience Summary</h3>
+                            <p className="text-sm text-text-secondary whitespace-pre-wrap">
+                                {profile.experience_summary || "No summary added yet"}
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-text-primary mb-2">Core Skills</h3>
+                                <ul className="flex flex-wrap gap-2">
+                                    {profile.key_skills.filter((skill) => skill.trim()).length ? (
+                                        profile.key_skills
+                                            .filter((skill) => skill.trim())
+                                            .map((skill) => (
+                                                <li key={skill} className="badge badge-default">
+                                                    {skill}
+                                                </li>
+                                            ))
+                                    ) : (
+                                        <li className="text-sm text-text-muted">No skills added yet</li>
+                                    )}
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h3 className="text-sm font-semibold text-text-primary mb-2">Highlights</h3>
+                                <ul className="space-y-1 text-sm text-text-secondary">
+                                    {profile.highlights.filter((highlight) => highlight.trim()).length ? (
+                                        profile.highlights
+                                            .filter((highlight) => highlight.trim())
+                                            .map((highlight) => (
+                                                <li key={highlight}>- {highlight}</li>
+                                            ))
+                                    ) : (
+                                        <li className="text-text-muted">No highlights added yet</li>
+                                    )}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="text-sm text-text-secondary">
+                            Sign-off: <span className="text-text-primary">{profile.email_sign_off || "Best regards,"}</span>
+                        </div>
+                    </div>
+                )}
+
+                {(!viewMode || !hasSavedData) && (
+                    <div className="card">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-8">
                         
                         {/* Basic Information */}
                         <div>
@@ -328,7 +417,16 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Submit */}
-                        <div className="pt-4 flex items-center justify-end border-t border-border">
+                        <div className="pt-4 flex items-center justify-end gap-3 border-t border-border">
+                            {hasSavedData && (
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode(true)}
+                                    className="btn-secondary"
+                                >
+                                    Cancel
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 disabled={saving}
@@ -347,7 +445,8 @@ export default function ProfilePage() {
                             </button>
                         </div>
                     </form>
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

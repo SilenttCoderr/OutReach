@@ -134,6 +134,11 @@ export interface ManualContactPayload {
     role: string;
 }
 
+type RecruiterApiRecord = Partial<Recruiter> & {
+    name?: string;
+    email?: string;
+};
+
 export interface AuthTokenResponse {
     access_token: string;
     token_type: string;
@@ -224,6 +229,17 @@ function normalizeProfile(profile?: Partial<UserProfile> | null): UserProfile {
         key_skills: profile.key_skills || [],
         highlights: profile.highlights || [],
         preferred_roles: profile.preferred_roles || [],
+    };
+}
+
+function normalizeRecruiter(record: RecruiterApiRecord): Recruiter {
+    return {
+        id: record.id,
+        recruiter_name: record.recruiter_name || record.name || "",
+        recruiter_email: record.recruiter_email || record.email || "",
+        company: record.company || "",
+        role: record.role || "",
+        status: record.status,
     };
 }
 
@@ -329,10 +345,33 @@ export async function fetchContacts(status?: string): Promise<Recruiter[]> {
         ? `/contacts?status=${encodeURIComponent(status)}&limit=100`
         : "/contacts?limit=100";
 
-    return requestJson<Recruiter[]>(query, {
+    const contacts = await requestJson<RecruiterApiRecord[]>(query, {
         requiresAuth: true,
         json: true,
         fallbackError: "Failed to fetch contacts",
+    });
+
+    return contacts.map(normalizeRecruiter);
+}
+
+export async function updateContact(contactId: string, payload: ManualContactPayload): Promise<Recruiter> {
+    const contact = await requestJson<RecruiterApiRecord>(`/contacts/${contactId}`, {
+        method: "PUT",
+        requiresAuth: true,
+        json: true,
+        body: JSON.stringify(payload),
+        fallbackError: "Failed to update contact",
+    });
+
+    return normalizeRecruiter(contact);
+}
+
+export async function deleteContact(contactId: string): Promise<{ deleted: boolean }> {
+    return requestJson<{ deleted: boolean }>(`/contacts/${contactId}`, {
+        method: "DELETE",
+        requiresAuth: true,
+        json: true,
+        fallbackError: "Failed to delete contact",
     });
 }
 

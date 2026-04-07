@@ -6,6 +6,7 @@ import { useState } from "react";
 import { buyCredits } from "@/services/api";
 import { MarketingHeader } from "@/components/layout/marketing_header";
 import { MarketingFooter } from "@/components/layout/marketing_footer";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 const pricingPlans = [
     {
@@ -96,13 +97,21 @@ const faqs = [
 
 export default function PricingPage() {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     const handleBuyCredits = async (credits: number, price: number) => {
+        setCheckoutError(null);
         try {
             const { url } = await buyCredits(credits, price * 100);
             window.location.assign(url);
-        } catch {
-            window.location.assign("/login?next=/pricing&reason=checkout_required");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Checkout failed. Please try again.";
+            if (message === "Unauthorized") {
+                window.location.assign("/login?next=/pricing&reason=checkout_required");
+                return;
+            }
+
+            setCheckoutError(message);
         }
     };
 
@@ -124,6 +133,14 @@ export default function PricingPage() {
 
                 {/* Pricing Cards */}
                 <section className="max-w-6xl mx-auto px-6 mb-24">
+                    {checkoutError && (
+                        <StatusBanner
+                            type="error"
+                            message={checkoutError}
+                            className="mb-6"
+                        />
+                    )}
+
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {pricingPlans.map((plan) => (
                             <div

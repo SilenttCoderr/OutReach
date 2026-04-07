@@ -21,11 +21,11 @@ export function Header({ onOpenMenu }: HeaderProps) {
                 </IconButton>
 
                 <div className="relative hidden md:block w-56 lg:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                     <input
                         type="text"
                         placeholder="Search..."
-                        className="input pl-10 h-10 bg-bg-base"
+                        className="input pl-10 pr-4 lg:pr-16 h-10 bg-bg-base"
                     />
                     <kbd className="hidden lg:inline-flex absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-xs bg-bg-elevated text-text-muted rounded border border-border">
                         Ctrl+K
