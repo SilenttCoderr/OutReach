@@ -214,6 +214,128 @@ class TestClearTrackingEndpoint:
         assert response.json()["contacts_reset"] == 3
 
 
+class TestSendTransitionConsistency:
+    """Regression coverage for deterministic email/contact status transitions."""
+
+    @patch("src.application.campaign_service.GmailAdapter")
+    def test_send_draft_marks_log_and_contact_sent(self, mock_gmail_adapter, mock_db, mock_user):
+        from src.application.campaign_service import send_draft_by_id
+
+        mock_log = MagicMock()
+        mock_log.id = 101
+        mock_log.gmail_draft_id = "draft_101"
+        mock_log.recipient_email = "recipient@example.com"
+        mock_log.status = "draft"
+
+        mock_contact = MagicMock()
+        mock_contact.status = "draft"
+
+        log_query = MagicMock()
+        log_query.filter.return_value.first.return_value = mock_log
+
+        contact_query = MagicMock()
+        contact_query.filter.return_value.first.return_value = mock_contact
+
+        mock_db.query.side_effect = [log_query, contact_query]
+
+        mock_gmail = MagicMock()
+        mock_gmail.authenticate.return_value = True
+        mock_gmail.send_draft.return_value = {"id": "msg_123"}
+        mock_gmail_adapter.return_value = mock_gmail
+
+        result = send_draft_by_id(mock_db, mock_user, 101)
+
+        assert result["status"] == "sent"
+        assert mock_log.status == "sent"
+        assert mock_contact.status == "sent"
+        mock_db.commit.assert_called_once()
+
+    @patch("src.application.campaign_service.GmailAdapter")
+    def test_send_draft_marks_log_and_contact_failed_when_send_returns_none(
+        self,
+        mock_gmail_adapter,
+        mock_db,
+        mock_user,
+    ):
+        from src.application.campaign_service import send_draft_by_id
+
+        mock_log = MagicMock()
+        mock_log.id = 102
+        mock_log.gmail_draft_id = "draft_102"
+        mock_log.recipient_email = "fail@example.com"
+        mock_log.status = "draft"
+
+        mock_contact = MagicMock()
+        mock_contact.status = "draft"
+
+        log_query = MagicMock()
+        log_query.filter.return_value.first.return_value = mock_log
+
+        contact_query = MagicMock()
+        contact_query.filter.return_value.first.return_value = mock_contact
+
+        mock_db.query.side_effect = [log_query, contact_query]
+
+        mock_gmail = MagicMock()
+        mock_gmail.authenticate.return_value = True
+        mock_gmail.send_draft.return_value = None
+        mock_gmail_adapter.return_value = mock_gmail
+
+        with pytest.raises(RuntimeError):
+            send_draft_by_id(mock_db, mock_user, 102)
+
+        assert mock_log.status == "failed"
+        assert mock_contact.status == "failed"
+        mock_db.commit.assert_called_once()
+
+    @patch("src.application.campaign_service.GmailAdapter")
+    @patch("src.application.campaign_service.SessionLocal")
+    def test_batch_send_marks_log_and_contact_failed_when_send_returns_none(
+        self,
+        mock_session_local,
+        mock_gmail_adapter,
+    ):
+        from src.application.campaign_service import send_drafts_batch
+
+        db_session = MagicMock()
+        mock_session_local.return_value = db_session
+
+        mock_user = MagicMock()
+        mock_user.id = 1
+
+        mock_log = MagicMock()
+        mock_log.id = 201
+        mock_log.gmail_draft_id = "draft_201"
+        mock_log.recipient_email = "batchfail@example.com"
+        mock_log.status = "draft"
+
+        mock_contact = MagicMock()
+        mock_contact.status = "draft"
+
+        user_query = MagicMock()
+        user_query.filter.return_value.first.return_value = mock_user
+
+        log_query = MagicMock()
+        log_query.filter.return_value.first.return_value = mock_log
+
+        contact_query = MagicMock()
+        contact_query.filter.return_value.first.return_value = mock_contact
+
+        db_session.query.side_effect = [user_query, log_query, contact_query]
+
+        mock_gmail = MagicMock()
+        mock_gmail.authenticate.return_value = True
+        mock_gmail.send_draft.return_value = None
+        mock_gmail_adapter.return_value = mock_gmail
+
+        send_drafts_batch(user_id=1, draft_ids=[201], delay_seconds=0)
+
+        assert mock_log.status == "failed"
+        assert mock_contact.status == "failed"
+        db_session.commit.assert_called_once()
+        db_session.close.assert_called_once()
+
+
 # Credit Validation Tests
 class TestCreditValidation:
     """Tests for credit validation in /api/draft."""
