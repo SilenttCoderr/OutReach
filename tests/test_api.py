@@ -58,7 +58,7 @@ class TestStatsEndpoint:
     def test_stats_returns_correct_structure(self, client, mock_db):
         """Should return stats with all required fields."""
         # Arrange
-        mock_db.query.return_value.filter.return_value.scalar.return_value = 10
+        mock_db.query.return_value.filter.return_value.scalar.side_effect = [10, 4, 3, 1]
         
         # Act
         response = client.get("/api/stats")
@@ -66,16 +66,17 @@ class TestStatsEndpoint:
         # Assert
         assert response.status_code == 200
         data = response.json()
-        assert "total" in data
-        assert "sent" in data
-        assert "draft" in data
+        assert "credits_available" in data
+        assert "total_sent" in data
+        assert "total_drafted" in data
         assert "pending" in data
-        assert "failed" in data
+        assert "failed_emails" in data
+        assert data["credits_available"] == 50
     
     def test_stats_returns_zero_for_empty(self, client, mock_db):
         """Should return zeros when no emails exist."""
         # Arrange
-        mock_db.query.return_value.filter.return_value.scalar.return_value = 0
+        mock_db.query.return_value.filter.return_value.scalar.side_effect = [0, 0, 0, 0]
         
         # Act
         response = client.get("/api/stats")
@@ -83,7 +84,10 @@ class TestStatsEndpoint:
         # Assert
         assert response.status_code == 200
         data = response.json()
-        assert data["total"] == 0
+        assert data["total_sent"] == 0
+        assert data["total_drafted"] == 0
+        assert data["failed_emails"] == 0
+        assert data["pending"] == 0
 
 
 # /api/contacts Tests
@@ -189,6 +193,25 @@ class TestSendAllEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["queued"] == 0
+
+
+class TestClearTrackingEndpoint:
+    """Tests for canonical clear-tracking behavior."""
+
+    @patch("src.application.campaign_service.clear_tracking_records")
+    def test_clear_tracking_returns_reset_counts(self, mock_clear_tracking, client):
+        mock_clear_tracking.return_value = {
+            "status": "cleared",
+            "email_logs_removed": 5,
+            "contacts_reset": 3,
+        }
+
+        response = client.post("/api/clear-tracking")
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "cleared"
+        assert response.json()["email_logs_removed"] == 5
+        assert response.json()["contacts_reset"] == 3
 
 
 # Credit Validation Tests
