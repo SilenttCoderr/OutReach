@@ -95,6 +95,16 @@ This checklist ensures a smooth production deployment of OutreachPro.
 
 ### 7. Final Verification
 
+- [ ] **Frontend release gates are green (required before ship):**
+  ```bash
+  cd web
+  npm run lint
+  npm run ui:guard
+  npm run build
+  npm run test:e2e:smoke -- --reporter=line
+  ```
+- [ ] **GitHub Actions `CI / Frontend Quality Gates` is passing** on the release commit/branch (lint + ui:guard + build + smoke)
+
 - [ ] **Test complete user flow:**
   1. [ ] Visit landing page
   2. [ ] Click "Get Started" / Sign up
