@@ -9,6 +9,7 @@
     "lint": "eslint",
     "ui:guard": "node ./scripts/ui-guard.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test tests/e2e/critical-flows.spec.ts",
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {

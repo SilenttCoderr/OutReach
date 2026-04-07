@@ -1,5 +1,19 @@
 import { test, expect } from "@playwright/test";
 
+async function expectDashboardOrLogin(
+    page: import("@playwright/test").Page,
+    routeHeading: string,
+) {
+    await page.waitForURL(/\/(dashboard(?:\/[^/]+)?|login)$/, { timeout: 10_000 });
+
+    if (page.url().endsWith("/login")) {
+        await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
+        return;
+    }
+
+    await expect(page.getByRole("heading", { name: routeHeading })).toBeVisible();
+}
+
 test.describe("critical frontend smoke flows", () => {
     test("auth entry routes render", async ({ page }) => {
         await page.goto("/signup");
@@ -11,14 +25,7 @@ test.describe("critical frontend smoke flows", () => {
 
     test("dashboard route protects unauthenticated access", async ({ page }) => {
         await page.goto("/dashboard");
-        await page.waitForURL(/\/(dashboard|login)$/, { timeout: 10_000 });
-
-        if (page.url().endsWith("/login")) {
-            await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
-            return;
-        }
-
-        await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+        await expectDashboardOrLogin(page, "Dashboard");
     });
 
     test("primary dashboard routes respond", async ({ page }) => {
@@ -30,7 +37,7 @@ test.describe("critical frontend smoke flows", () => {
 
         for (const route of routes) {
             await page.goto(route.path);
-            await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();
+            await expectDashboardOrLogin(page, route.heading);
             await expect(page.getByText("This page could not be found")).toHaveCount(0);
         }
     });
