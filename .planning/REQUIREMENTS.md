@@ -10,7 +10,7 @@
 - [ ] **ARCH-01**: Backend modules are separated into API, application, domain, and infrastructure layers with explicit dependency direction.
 - [ ] **ARCH-02**: `app.py` is reduced to composition/bootstrap responsibilities, with business flows extracted into dedicated modules.
 - [ ] **ARCH-03**: Route handlers consume application services instead of embedding orchestration logic directly.
-- [ ] **ARCH-04**: Legacy tracking paths are isolated or deprecated to a single canonical send-tracking model.
+- [x] **ARCH-04**: Legacy tracking paths are isolated or deprecated to a single canonical send-tracking model.
 
 ### Deployment
 
@@ -62,7 +62,7 @@
 | ARCH-01 | Phase 1 | Complete |
 | ARCH-02 | Phase 2 | Pending |
 | ARCH-03 | Phase 2 | Pending |
-| ARCH-04 | Phase 3 | Pending |
+| ARCH-04 | Phase 3 | Complete |
 | DEPL-01 | Phase 1 | Complete |
 | DEPL-02 | Phase 1 | Complete |
 | DEPL-03 | Phase 6 | Complete |
