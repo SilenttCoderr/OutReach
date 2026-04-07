@@ -62,6 +62,22 @@ Boundary violations must be flagged in PR review and corrected before merge.
 3. Add adapter wrappers before removing legacy direct calls.
 4. Keep feature parity checks in place for each extracted slice.
 
+## Canonical Pipeline State Contract
+
+Phase 3 establishes database-backed tracking as the canonical state model.
+
+- Canonical source of truth:
+  - `EmailLog.status` for delivery workflow state (`draft`, `sent`, `failed`)
+  - `Contact.status` for per-contact campaign progress (`new`, `draft`, `sent`, `failed`)
+- Non-canonical compatibility layer:
+  - `src/tracker.py` is legacy-only and must not be treated as authoritative for stats/history.
+- Required transition invariants:
+  - Single-send and batch-send paths must update `EmailLog` and the matching `Contact` deterministically.
+  - Any send failure (provider failure, missing draft id, runtime exception) must persist `failed` state.
+  - Stats/history APIs must read persisted DB status, not inferred console/log output.
+- Reset semantics:
+  - `POST /api/clear-tracking` deletes user-scoped `EmailLog` rows and resets non-`new` contact statuses to `new`.
+
 ## Definition Of Done For Module Extraction
 
 A module extraction is complete when:

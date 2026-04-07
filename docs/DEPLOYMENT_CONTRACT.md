@@ -37,6 +37,15 @@ Resolution behavior is defined in `web/next.config.ts` and `web/src/services/api
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 
+## Canonical Tracking Operational Contract
+
+- Runtime source of truth for campaign state is database-backed `EmailLog.status` and `Contact.status`.
+- Delivery failures must be persisted as `failed` and become visible via `/api/stats` and `/api/history` without reading logs.
+- `POST /api/clear-tracking` is the supported operational reset:
+   - removes user-scoped email logs
+   - resets non-`new` contacts to `new`
+- The backend service must have DB write access for send transitions and reset operations in every environment.
+
 ## Rollback Checklist
 
 1. Confirm latest known-good backend image/release in Render.
@@ -49,6 +58,8 @@ Resolution behavior is defined in `web/next.config.ts` and `web/src/services/api
    - `/login` auth
    - `/dashboard` stats fetch
    - upload -> draft -> send
+   - failed send state appears in `/api/stats` and `/api/history`
+   - `/api/clear-tracking` returns cleared/reset counts
    - Stripe webhook processing
 
 ## Canonical Config References
