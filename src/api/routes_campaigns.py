@@ -140,6 +140,9 @@ async def send_all_drafts(
 
 
 @router.post("/clear-tracking")
-async def clear_tracking():
+async def clear_tracking(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db_session),
+):
     """Clear all tracking records to allow re-sending."""
-    return campaign_service.clear_tracking_records()
+    return campaign_service.clear_tracking_records(db, user.id)

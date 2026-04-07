@@ -10,7 +10,6 @@ from src.database import SessionLocal
 from src.email_generator import EmailGenerator
 from src.infrastructure.gmail_adapter import GmailAdapter
 from src.models import Contact, EmailLog, User
-from src.tracker import EmailTracker
 
 
 def _get_generator(use_llm: bool):
@@ -155,12 +154,9 @@ def create_drafts_for_new_contacts(
     use_llm: bool,
     attachment_paths: Optional[List[str]] = None,
 ) -> Dict[str, int]:
-    # Validate profile first — gives the user the most actionable error
-    user_profile = _get_user_profile(db, user.id)
-
     gmail = GmailAdapter(user)
     if not gmail.authenticate():
-        raise PermissionError("Gmail not connected. Please login with Google to enable email drafting.")
+        raise PermissionError("Gmail not connected. Please login with Google again.")
 
     contacts = db.query(Contact).filter(Contact.user_id == user.id, Contact.status == "new").all()
     if not contacts:
@@ -170,7 +166,7 @@ def create_drafts_for_new_contacts(
         raise ValueError(f"Insufficient credits. You have {user.credits} but need {len(contacts)}.")
 
     generator = _get_generator(use_llm)
-    # user_profile already fetched above (before Gmail auth check)
+    user_profile = _get_user_profile(db, user.id)
 
     success = 0
     failed = 0
@@ -186,7 +182,7 @@ def create_drafts_for_new_contacts(
             if use_llm:
                 result = generator.generate(recruiter_data, user_profile, has_attachments=bool(attachment_paths))
             else:
-                result = generator.generate(recruiter_data, user_profile, has_attachments=bool(attachment_paths))
+                 result = generator.generate(recruiter_data, has_attachments=bool(attachment_paths))
             
             draft_result = gmail.create_draft(
                 contact.email,
@@ -300,8 +296,29 @@ def send_drafts_batch(user_id: int, draft_ids: List[int], delay_seconds: int) ->
         db_session.close()
 
 
-def clear_tracking_records() -> Dict[str, str]:
-    tracker = EmailTracker()
-    tracker.records = {}
-    tracker._save()
-    return {"status": "cleared"}
+def clear_tracking_records(db: Session, user_id: int) -> Dict[str, int | str]:
+    """Clear canonical DB-backed tracking state for a user.
+
+    This resets campaign state to allow a clean re-run without relying on legacy
+    file-based tracker storage.
+    """
+
+    cleared_logs = (
+        db.query(EmailLog)
+        .filter(EmailLog.user_id == user_id)
+        .delete(synchronize_session=False)
+    )
+
+    reset_contacts = (
+        db.query(Contact)
+        .filter(Contact.user_id == user_id, Contact.status != "new")
+        .update({Contact.status: "new"}, synchronize_session=False)
+    )
+
+    db.commit()
+
+    return {
+        "status": "cleared",
+        "email_logs_removed": cleared_logs,
+        "contacts_reset": reset_contacts,
+    }
