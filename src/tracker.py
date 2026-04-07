@@ -1,6 +1,11 @@
 """
 Email Tracker Module
 Tracks sent emails and their statuses to prevent duplicates.
+
+Legacy compatibility note:
+- This file-based tracker is not the canonical campaign tracking source.
+- Canonical state lives in DB-backed models (EmailLog + Contact status).
+- Keep usage isolated to compatibility paths only.
 """
 
 import json
