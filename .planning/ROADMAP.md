@@ -156,7 +156,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 | 1. Baseline and Deployment Contracts | 3/3 | Complete    | 2026-03-31 |
 | 2. Backend Modularization Pass | 3/3 | Complete | 2026-04-01 |
 | 2.1. Frontend Refinement and Ship Readiness | 7/7 | Complete | 2026-04-08 |
-| 3. Data and Pipeline Cohesion | 0/2 | Not started | - |
+| 3. Data and Pipeline Cohesion | 0/2 | Planned | - |
 | 4. Security and Auth Hardening | 0/3 | Not started | - |
 | 5. Observability and Runtime Reliability | 0/2 | Not started | - |
 | 6. CI, Runbooks, and Release Safety | 0/3 | Not started | - |
