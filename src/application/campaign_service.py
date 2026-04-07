@@ -28,6 +28,16 @@ def _get_user_profile(db: Session, user_id: int) -> Dict:
     return profile.to_dict()
 
 
+def _set_contact_status(db: Session, user_id: int, recipient_email: str, status: str) -> None:
+    contact = (
+        db.query(Contact)
+        .filter(Contact.user_id == user_id, Contact.email == recipient_email)
+        .first()
+    )
+    if contact:
+        contact.status = status
+
+
 def get_stats(db: Session, user: User) -> Dict[str, int]:
     from sqlalchemy import func
 
@@ -242,14 +252,28 @@ def send_draft_by_id(db: Session, user: User, draft_id: int) -> Dict[str, str]:
         raise PermissionError("Gmail authentication failed")
 
     if not log.gmail_draft_id:
+        log.status = "failed"
+        _set_contact_status(db, user.id, log.recipient_email, "failed")
+        db.commit()
         raise ValueError("Draft ID missing for this email.")
 
-    sent_message = gmail.send_draft(log.gmail_draft_id)
+    try:
+        sent_message = gmail.send_draft(log.gmail_draft_id)
+    except Exception as exc:
+        log.status = "failed"
+        _set_contact_status(db, user.id, log.recipient_email, "failed")
+        db.commit()
+        raise RuntimeError(f"Failed to send draft via Gmail API: {exc}") from exc
+
     if not sent_message:
+        log.status = "failed"
+        _set_contact_status(db, user.id, log.recipient_email, "failed")
+        db.commit()
         raise RuntimeError("Failed to send draft via Gmail API")
 
     log.status = "sent"
     log.sent_at = datetime.utcnow()
+    _set_contact_status(db, user.id, log.recipient_email, "sent")
     db.commit()
     return {"status": "sent", "message_id": sent_message["id"]}
 
@@ -272,25 +296,41 @@ def send_drafts_batch(user_id: int, draft_ids: List[int], delay_seconds: int) ->
             return
 
         for draft_id in draft_ids:
+            log = None
             try:
                 log = (
                     db_session.query(EmailLog)
                     .filter(EmailLog.id == draft_id, EmailLog.user_id == user_id)
                     .first()
                 )
-                if not log or not log.gmail_draft_id:
+                if not log:
+                    continue
+
+                if not log.gmail_draft_id:
+                    log.status = "failed"
+                    _set_contact_status(db_session, user_id, log.recipient_email, "failed")
+                    db_session.commit()
                     continue
 
                 result = gmail.send_draft(log.gmail_draft_id)
                 if result:
                     log.status = "sent"
                     log.sent_at = datetime.utcnow()
-                    db_session.commit()
+                    _set_contact_status(db_session, user_id, log.recipient_email, "sent")
                     print(f"Sent: {log.recipient_email}")
+                else:
+                    log.status = "failed"
+                    _set_contact_status(db_session, user_id, log.recipient_email, "failed")
+
+                db_session.commit()
 
                 if delay_seconds > 0:
                     time.sleep(delay_seconds)
             except Exception as exc:
+                if log:
+                    log.status = "failed"
+                    _set_contact_status(db_session, user_id, log.recipient_email, "failed")
+                    db_session.commit()
                 print(f"Error sending draft id {draft_id}: {exc}")
     finally:
         db_session.close()
