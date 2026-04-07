@@ -16,7 +16,7 @@
 
 - [ ] **DEPL-01**: Render deploy uses a deterministic startup contract (env validation, health endpoint readiness, migration strategy).
 - [ ] **DEPL-02**: Vercel deploy reliably points to backend API origin across dev/preview/prod environments.
-- [ ] **DEPL-03**: Rollback-safe deployment steps are documented and verified for both frontend and backend.
+- [x] **DEPL-03**: Rollback-safe deployment steps are documented and verified for both frontend and backend.
 - [ ] **DEPL-04**: Build/runtime artifacts and ignored paths are configured to prevent accidental deploy/commit pollution.
 
 ### Security
@@ -65,7 +65,7 @@
 | ARCH-04 | Phase 3 | Pending |
 | DEPL-01 | Phase 1 | Complete |
 | DEPL-02 | Phase 1 | Complete |
-| DEPL-03 | Phase 6 | Pending |
+| DEPL-03 | Phase 6 | Complete |
 | DEPL-04 | Phase 1 | Complete |
 | SECU-01 | Phase 4 | Pending |
 | SECU-02 | Phase 4 | Pending |
