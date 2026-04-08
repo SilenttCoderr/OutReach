@@ -1,6 +1,6 @@
 Subject: {{ current_title }} @ {{ current_company }} - Opportunities at {{ company }}
 
-Hi {{ recruiter_name.split()[0] }},
+Hi {{ ((recruiter_name or '').split() | first) or 'there' }},
 
 I'm a {{ degree }} student at {{ university }} with experience as a {{ current_title }} at {{ current_company }}, where {{ experience_summary }}. I'm interested in opportunities at {{ company }}.
 

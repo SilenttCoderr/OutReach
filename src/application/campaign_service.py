@@ -134,10 +134,7 @@ def preview_emails(
     previews = []
     for recruiter in recruiters:
         try:
-            if use_llm:
-                result = generator.generate(recruiter, user_profile)
-            else:
-                result = generator.generate(recruiter)
+            result = generator.generate(recruiter, user_profile=user_profile)
             previews.append(
                 {
                     "recruiter_name": recruiter.get("recruiter_name", ""),
@@ -189,10 +186,11 @@ def create_drafts_for_new_contacts(
                 "role": contact.role,
                 "company_type": "unknown",
             }
-            if use_llm:
-                result = generator.generate(recruiter_data, user_profile, has_attachments=bool(attachment_paths))
-            else:
-                 result = generator.generate(recruiter_data, has_attachments=bool(attachment_paths))
+            result = generator.generate(
+                recruiter_data,
+                user_profile=user_profile,
+                has_attachments=bool(attachment_paths),
+            )
             
             draft_result = gmail.create_draft(
                 contact.email,

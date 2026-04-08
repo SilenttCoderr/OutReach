@@ -88,10 +88,11 @@ def preview(input_file: str, template: str, profile_path: str, limit: int, llm: 
     generator = get_generator(use_llm=llm)
     
     for i, recruiter in enumerate(recruiters, 1):
-        if llm:
-            preview = generator.preview_email(recruiter, user_profile, template)
-        else:
-             preview = generator.preview_email(recruiter, template)
+        preview = generator.preview_email(
+            recruiter,
+            user_profile=user_profile,
+            template_name=template,
+        )
              
         console.print(f"\n[bold cyan]Email {i}/{len(recruiters)}[/bold cyan]")
         console.print(preview)
@@ -146,10 +147,11 @@ def draft(input_file: str, template: str, profile_path: str, attachment: str, ll
         console.print(f"[{i}/{len(recruiters)}] {recruiter.get('company')}...")
         
         try:
-            if llm:
-                result = generator.generate(recruiter, user_profile, template)
-            else:
-                 result = generator.generate(recruiter, template)
+            result = generator.generate(
+                recruiter,
+                user_profile=user_profile,
+                template_name=template,
+            )
                  
             subject = result["subject"]
             body = result["body"]
@@ -225,10 +227,11 @@ def send(input_file: str, template: str, profile_path: str, delay: int, attachme
         console.print(f"[{i}/{len(recruiters)}] {recruiter.get('company')} - {recruiter.get('recruiter_email')}")
         
         try:
-            if llm:
-                result = generator.generate(recruiter, user_profile, template)
-            else:
-                 result = generator.generate(recruiter, template)
+            result = generator.generate(
+                recruiter,
+                user_profile=user_profile,
+                template_name=template,
+            )
                  
             subject = result["subject"]
             body = result["body"]

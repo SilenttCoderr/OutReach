@@ -6,7 +6,6 @@ Generates personalized cold emails using templates and recruiter data.
 from pathlib import Path
 from typing import Dict, Optional
 from jinja2 import Environment, FileSystemLoader
-import json
 
 
 class EmailGenerator:
@@ -52,6 +51,16 @@ class EmailGenerator:
         Returns:
             Dict with subject and body keys
         """
+        if user_profile is None:
+            profile_data = {}
+        elif isinstance(user_profile, dict):
+            profile_data = user_profile
+        else:
+            raise ValueError("user_profile must be a dict when provided")
+
+        raw_recruiter_name = recruiter.get("recruiter_name")
+        recruiter_name = raw_recruiter_name.strip() if isinstance(raw_recruiter_name, str) else ""
+
         template_file = f"{template_name}.txt"
         
         try:
@@ -61,13 +70,13 @@ class EmailGenerator:
         
         # Prepare context
         context = {
-            "recruiter_name": recruiter.get("recruiter_name", "Hiring Manager"),
-            "recruiter_email": recruiter.get("recruiter_email", ""),
-            "company": recruiter.get("company", "your company"),
-            "role": recruiter.get("role", "AI/ML"),
-            "company_type": recruiter.get("company_type", ""),
-            "company_note": custom_note or recruiter.get("notes", ""),
-            **(user_profile or {})  # Include all profile data
+            "recruiter_name": recruiter_name,
+            "recruiter_email": recruiter.get("recruiter_email") or "",
+            "company": recruiter.get("company") or "your company",
+            "role": recruiter.get("role") or "AI/ML",
+            "company_type": recruiter.get("company_type") or "",
+            "company_note": custom_note or recruiter.get("notes") or "",
+            **profile_data  # Include all profile data
         }
         
         # Render template

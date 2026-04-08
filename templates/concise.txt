@@ -1,6 +1,6 @@
 Subject: {{ current_title }} @ {{ current_company }} - Opportunities at {{ company }}
 
-Hi {{ recruiter_name.split()[0] }},
+Hi {{ ((recruiter_name or '').split() | first) or 'there' }},
 
 {{ degree }} student with {{ current_title }} experience - {{ experience_summary }} at {{ current_company }}. Resume attached.
 
