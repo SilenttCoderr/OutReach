@@ -173,7 +173,7 @@ def call_llm(state: EmailState) -> dict:
             "retry_count": 999,
         }
 
-    model_name = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
+    model_name = os.getenv("LLM_MODEL", "groq/compound")
 
     try:
         client = Groq(api_key=api_key)
