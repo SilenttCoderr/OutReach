@@ -151,18 +151,21 @@ def preview_emails(
         return {"emails": [], "message": str(e)}
 
     previews = []
+    any_fallback = False
     for recruiter in recruiters:
         try:
             result = generator.generate(recruiter, user_profile=user_profile)
-            previews.append(
-                {
+            preview = {
                     "recruiter_name": recruiter.get("recruiter_name", ""),
                     "recruiter_email": recruiter.get("recruiter_email", ""),
                     "company": recruiter.get("company", ""),
                     "subject": result["subject"],
                     "body": result["body"],
-                }
-            )
+            }
+            if result.get("used_fallback"):
+                preview["warning"] = f"AI unavailable: {result.get('fallback_reason', 'unknown')}. Using template."
+                any_fallback = True
+            previews.append(preview)
         except Exception as exc:
             previews.append(
                 {
@@ -171,7 +174,10 @@ def preview_emails(
                 }
             )
 
-    return {"emails": previews}
+    response = {"emails": previews}
+    if any_fallback:
+        response["warning"] = "Some emails used template fallback because AI generation failed. Check your GEMINI_API_KEY in .env."
+    return response
 
 
 def create_drafts_for_new_contacts(
@@ -253,10 +259,13 @@ def create_drafts_for_new_contacts(
                     )
                 )
                 success += 1
+                fallback_errors = []
+                if result.get("used_fallback"):
+                    fallback_errors = [f"AI fallback: {result.get('fallback_reason', 'unknown')}"]
                 progress.append({
                     "contact": contact.email,
                     "status": "success",
-                    "errors": []
+                    "errors": fallback_errors
                 })
             else:
                 failed += 1

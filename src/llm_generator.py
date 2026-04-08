@@ -127,6 +127,7 @@ class LLMEmailGenerator:
         subject = result.get("subject", "")
         body = result.get("body", "")
         used_fallback = result.get("used_fallback", False)
+        fallback_reason = result.get("fallback_reason", "")
 
         logger.info(
             "Email generated",
@@ -135,9 +136,14 @@ class LLMEmailGenerator:
             body_length=len(body),
             duration_ms=round(duration_ms, 2),
             used_fallback=used_fallback,
+            fallback_reason=fallback_reason,
         )
 
-        return {"subject": subject, "body": body}
+        response = {"subject": subject, "body": body}
+        if used_fallback:
+            response["used_fallback"] = True
+            response["fallback_reason"] = fallback_reason
+        return response
 
     def generate_batch(self, recruiters: list, user_profile: Dict, template_name: str = "professional") -> list:
         """Generate emails for multiple recruiters."""

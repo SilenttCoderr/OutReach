@@ -43,6 +43,7 @@ class EmailState(TypedDict, total=False):
     error: Optional[str]
     retry_count: int
     used_fallback: bool
+    fallback_reason: str
 
 
 # ---------------------------------------------------------------------------
@@ -163,7 +164,12 @@ def call_llm(state: EmailState) -> dict:
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        return {"error": "GEMINI_API_KEY not set", "retry_count": state.get("retry_count", 0)}
+        return {"error": "GEMINI_API_KEY not set", "retry_count": 999}
+    if api_key.startswith("your_") or len(api_key) < 10:
+        return {
+            "error": "GEMINI_API_KEY not configured — set a valid key in .env",
+            "retry_count": 999,
+        }
 
     model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
@@ -242,6 +248,8 @@ def apply_attachments(state: EmailState) -> dict:
 def fallback_email(state: EmailState) -> dict:
     """Generate a safe template-based fallback email."""
     recruiter = state.get("recruiter", {})
+    if not isinstance(recruiter, dict):
+        recruiter = {}
     recruiter_name = recruiter.get("recruiter_name", "Hiring Manager")
     first_name = recruiter_name.split()[0] if recruiter_name else "there"
     company = recruiter.get("company", "your company")
@@ -268,13 +276,27 @@ def fallback_email(state: EmailState) -> dict:
     if state.get("has_attachments"):
         body += "\n\nI've attached my resume for your reference."
 
-    logger.info("Using fallback email for company=%s reason=%s", company, state.get("error", "unknown"))
-    return {"subject": subject, "body": body, "used_fallback": True, "error": None}
+    fallback_reason = state.get("error", "unknown")
+    logger.info("Using fallback email for company=%s reason=%s", company, fallback_reason)
+    return {
+        "subject": subject,
+        "body": body,
+        "used_fallback": True,
+        "fallback_reason": fallback_reason,
+        "error": None,
+    }
 
 
 # ---------------------------------------------------------------------------
 # Routing functions
 # ---------------------------------------------------------------------------
+
+
+def route_after_validation(state: EmailState) -> Literal["enrich_context", "fallback_email"]:
+    """Skip to fallback if input validation failed."""
+    if state.get("error"):
+        return "fallback_email"
+    return "enrich_context"
 
 
 def route_after_llm(state: EmailState) -> Literal["parse_response", "call_llm", "fallback_email"]:
@@ -325,7 +347,7 @@ def build_email_graph():
 
     # --- edges ---
     graph.set_entry_point("validate_input")
-    graph.add_edge("validate_input", "enrich_context")
+    graph.add_conditional_edges("validate_input", route_after_validation)
     graph.add_edge("enrich_context", "build_prompt")
     graph.add_edge("build_prompt", "call_llm")
 
