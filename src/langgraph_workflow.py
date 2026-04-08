@@ -159,38 +159,73 @@ Format: Subject: [subject line]
 
 
 def call_llm(state: EmailState) -> dict:
-    """Call Gemini API. Increments retry_count on failure."""
-    from google import genai
+    """Call Groq API. Handles rate limits with backoff and skips retries on quota exhaustion."""
+    import re
+    import time as _time
+    from groq import Groq
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        return {"error": "GEMINI_API_KEY not set", "retry_count": 999}
+        return {"error": "GROQ_API_KEY not set", "retry_count": 999}
     if api_key.startswith("your_") or len(api_key) < 10:
         return {
-            "error": "GEMINI_API_KEY not configured — set a valid key in .env",
+            "error": "GROQ_API_KEY not configured — set a valid key in .env",
             "retry_count": 999,
         }
 
-    model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    model_name = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
 
     try:
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
+        client = Groq(api_key=api_key)
+        response = client.chat.completions.create(
             model=model_name,
-            contents=state["prompt"],
+            messages=[{"role": "user", "content": state["prompt"]}],
+            temperature=1,
+            max_completion_tokens=8192,
+            top_p=1,
+            reasoning_effort="medium",
+            stop=None
         )
-        text = response.text.strip()
+        text = response.choices[0].message.content.strip()
         logger.info("LLM call succeeded for company=%s", state.get("company", "?"))
         return {"llm_response": text, "error": None}
     except Exception as exc:
         retry = state.get("retry_count", 0) + 1
+        err_str = str(exc)
+
+        # Detect rate-limit / quota errors
+        is_rate_limit = "429" in err_str or "rate_limit" in err_str.lower()
+        is_daily_quota = "quota" in err_str.lower() or "limit" in err_str.lower()
+
+        if is_rate_limit and is_daily_quota:
+            logger.warning(
+                "Groq API quota exhausted for model=%s. Falling back to template.",
+                model_name,
+            )
+            return {
+                "error": "Groq API rate limit exceeded. Try again later or upgrade your plan.",
+                "retry_count": 999,
+            }
+
+        if is_rate_limit and retry < 2:
+            # Transient rate limit — parse delay and wait
+            delay_match = re.search(r"try again in (\d+\.?\d*)s", err_str, re.IGNORECASE)
+            wait_secs = float(delay_match.group(1)) if delay_match else 5
+            wait_secs = min(int(wait_secs) + 1, 60)  # cap at 60s
+            logger.info(
+                "Rate limited, waiting %ds before retry (attempt %d)",
+                wait_secs,
+                retry,
+            )
+            _time.sleep(wait_secs)
+
         logger.warning(
             "LLM call failed (attempt %d): %s — %s",
             retry,
             type(exc).__name__,
-            str(exc),
+            err_str[:200],
         )
-        return {"error": str(exc), "retry_count": retry}
+        return {"error": err_str, "retry_count": retry}
 
 
 def parse_response(state: EmailState) -> dict:
