@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
-import { generateDrafts, checkAuthStatus, getGoogleAuthUrl } from "@/services/api";
+import { generateDrafts, checkAuthStatus, getGoogleAuthUrl, DraftGenerationProgress, DraftGenerationResponse } from "@/services/api";
 import Link from "next/link";
 import { SwitchField } from "@/components/ui/switch-field";
 
@@ -10,7 +10,8 @@ export default function CampaignsPage() {
     const [useLLM, setUseLLM] = useState(true);
     const [attachments, setAttachments] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<{ success: number, failed: number } | null>(null);
+    const [result, setResult] = useState<DraftGenerationResponse | null>(null);
+    const [progress, setProgress] = useState<DraftGenerationProgress[]>([]);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [gmailConnected, setGmailConnected] = useState<boolean | null>(null); // null = loading
     const googleAuthUrl = getGoogleAuthUrl();
@@ -36,10 +37,12 @@ export default function CampaignsPage() {
         }
         setLoading(true);
         setResult(null);
+        setProgress([]);
         setMessage(null);
         try {
             const data = await generateDrafts(useLLM, attachments);
-            setResult({ success: data.success, failed: data.failed });
+            setResult(data);
+            setProgress(data.progress || []);
             if (data.success > 0) {
                 setMessage({ type: 'success', text: `Created ${data.success} draft(s) in your Gmail!` });
             } else if (data.failed > 0) {
@@ -170,6 +173,21 @@ export default function CampaignsPage() {
                         </div>
                     </div>
 
+                    {/* Progress Bar */}
+                    {loading && progress.length > 0 && (
+                        <div className="w-full my-4">
+                            <div className="h-3 bg-border rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-accent transition-all duration-300"
+                                    style={{ width: `${(progress.filter(p => p.status === 'success').length / progress.length) * 100}%` }}
+                                />
+                            </div>
+                            <div className="text-xs text-center mt-1 text-text-secondary">
+                                {progress.filter(p => p.status === 'success').length} of {progress.length} drafts generated
+                            </div>
+                        </div>
+                    )}
+
                     {/* Result */}
                     {result && (
                         <div className="card p-6 bg-success/5 border-success/30">
@@ -183,6 +201,20 @@ export default function CampaignsPage() {
                                         Drafted {result.success} emails
                                         {result.failed > 0 && <span className="text-error"> ({result.failed} failed)</span>}
                                     </p>
+                                    {/* Error details */}
+                                    {result.errors && result.errors.length > 0 && (
+                                        <div className="mt-2">
+                                            <h5 className="font-semibold text-error mb-1">Failed Drafts:</h5>
+                                            <ul className="list-disc pl-5 text-xs text-error">
+                                                {result.errors.map((err, idx) => (
+                                                    <li key={idx}>
+                                                        {err.contact ? <span>{err.contact}: </span> : null}
+                                                        {err.errors.join(", ")}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                                 <Link href="/dashboard/drafts" className="btn-secondary text-sm">
                                     View Drafts <ArrowRight className="w-4 h-4" />

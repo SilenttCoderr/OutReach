@@ -178,11 +178,19 @@ export interface AdminOverview {
     users: AdminUserAccount[];
 }
 
+export interface DraftGenerationProgress {
+    contact: string | null;
+    status: 'success' | 'failed';
+    errors: string[];
+}
+
 export interface DraftGenerationResponse {
     success: number;
     failed: number;
     total?: number;
     message?: string;
+    errors?: DraftGenerationProgress[];
+    progress?: DraftGenerationProgress[];
 }
 
 export interface SendDraftResponse {

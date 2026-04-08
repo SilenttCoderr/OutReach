@@ -1,3 +1,22 @@
+def _validate_contact(contact):
+    errors = []
+    if not contact.name:
+        errors.append("Missing recruiter_name")
+    if not contact.email or "@" not in contact.email:
+        errors.append("Missing or invalid recruiter_email")
+    if not contact.company:
+        errors.append("Missing company")
+    if not contact.role:
+        errors.append("Missing role")
+    return errors
+
+def _validate_profile(profile):
+    errors = []
+    required_fields = ["full_name", "current_title", "current_company", "degree", "university", "graduation_date"]
+    for field in required_fields:
+        if not profile.get(field):
+            errors.append(f"Missing {field} in profile")
+    return errors
 """Campaign and draft/send workflow orchestration services."""
 
 import time
@@ -175,9 +194,32 @@ def create_drafts_for_new_contacts(
     generator = _get_generator(use_llm)
     user_profile = _get_user_profile(db, user.id)
 
+
     success = 0
     failed = 0
+    progress = []
+    profile_errors = _validate_profile(user_profile)
+    if profile_errors:
+        return {
+            "success": 0,
+            "failed": len(contacts),
+            "total": len(contacts),
+            "attachments": len(attachment_paths or []),
+            "remaining_credits": user.credits,
+            "errors": [{"contact": None, "errors": profile_errors} for _ in contacts],
+            "progress": []
+        }
+
     for contact in contacts:
+        contact_errors = _validate_contact(contact)
+        if contact_errors:
+            failed += 1
+            progress.append({
+                "contact": contact.email,
+                "status": "failed",
+                "errors": contact_errors
+            })
+            continue
         try:
             recruiter_data = {
                 "recruiter_name": contact.name,
@@ -191,7 +233,6 @@ def create_drafts_for_new_contacts(
                 user_profile=user_profile,
                 has_attachments=bool(attachment_paths),
             )
-            
             draft_result = gmail.create_draft(
                 contact.email,
                 result["subject"],
@@ -212,11 +253,25 @@ def create_drafts_for_new_contacts(
                     )
                 )
                 success += 1
+                progress.append({
+                    "contact": contact.email,
+                    "status": "success",
+                    "errors": []
+                })
             else:
                 failed += 1
+                progress.append({
+                    "contact": contact.email,
+                    "status": "failed",
+                    "errors": ["Failed to create draft in Gmail"]
+                })
         except Exception as exc:
-            print(f"Error creating draft: {exc}")
             failed += 1
+            progress.append({
+                "contact": contact.email,
+                "status": "failed",
+                "errors": [str(exc)]
+            })
 
     if success > 0:
         user.credits -= success
@@ -228,6 +283,8 @@ def create_drafts_for_new_contacts(
         "total": len(contacts),
         "attachments": len(attachment_paths or []),
         "remaining_credits": user.credits,
+        "errors": [p for p in progress if p["status"] == "failed"],
+        "progress": progress
     }
 
 

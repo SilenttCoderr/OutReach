@@ -16,17 +16,19 @@ router = APIRouter(tags=["Campaigns"])
 async def get_stats(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),
-):
-    """Get email tracking statistics and current user credits."""
-    return campaign_service.get_stats(db, user)
-
-
-@router.get("/history")
-async def get_history(
-    status: Optional[str] = None,
-    limit: int = 50,
-    user: User = Depends(get_authenticated_user),
-    db: Session = Depends(get_db_session),
+    try:
+        result = campaign_service.create_drafts_for_new_contacts(
+            db,
+            user,
+            use_llm=use_llm_bool,
+            attachment_paths=attachment_paths if attachment_paths else None,
+        )
+        # Return progress and errors for frontend progress bar
+        return result
+    except PermissionError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 ):
     """Get email history from database."""
     return campaign_service.get_history(db, user.id, status=status, limit=limit)
