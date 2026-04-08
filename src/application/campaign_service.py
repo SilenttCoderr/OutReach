@@ -12,7 +12,7 @@ def _validate_contact(contact):
 
 def _validate_profile(profile):
     errors = []
-    required_fields = ["full_name", "current_title", "current_company", "degree", "university", "graduation_date"]
+    required_fields = ["full_name", "current_title", "experience_summary"]
     for field in required_fields:
         if not profile.get(field):
             errors.append(f"Missing {field} in profile")
