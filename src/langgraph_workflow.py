@@ -190,6 +190,13 @@ def call_llm(state: EmailState) -> dict:
 def parse_response(state: EmailState) -> dict:
     """Extract subject and body from LLM raw text."""
     text = state.get("llm_response", "")
+
+    # Remove markdown code blocks if the LLM wrapped its response
+    if text.startswith("```"):
+        text_lines = text.split("\n")
+        if len(text_lines) > 2 and text_lines[-1].strip() == "```":
+            text = "\n".join(text_lines[1:-1]).strip()
+
     lines = text.split("\n")
     subject = ""
     body_start = 0
