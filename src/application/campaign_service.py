@@ -301,13 +301,74 @@ def create_drafts_for_new_contacts(
 
 
 def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
-    return (
+    user = db.query(User).filter(User.id == user_id).first()
+    logs = (
         db.query(EmailLog)
         .filter(EmailLog.user_id == user_id, EmailLog.status == "draft")
         .order_by(EmailLog.created_at.desc())
         .all()
     )
+    
+    if not logs or not user:
+        return logs
 
+    gmail = GmailAdapter(user)
+    if not gmail.authenticate():
+        return logs # degrade gracefully
+        
+    synced_logs = []
+    has_changes = False
+    for log in logs:
+        if log.gmail_draft_id:
+            draft = gmail.get_draft(log.gmail_draft_id)
+            if draft and draft.get("error") == "not_found":
+                # Draft was deleted manually in Gmail
+                log.status = "deleted"
+                has_changes = True
+                continue
+        synced_logs.append(log)
+    
+    if has_changes:
+        db.commit()
+        
+    return synced_logs
+
+
+def update_draft(db: Session, user: User, draft_id: int, subject: str, body: str) -> Dict[str, str]:
+    log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()
+    if not log:
+        raise LookupError("Draft not found locally")
+        
+    gmail = GmailAdapter(user)
+    if not gmail.authenticate():
+        raise PermissionError("Gmail authentication failed")
+        
+    if not log.gmail_draft_id:
+        raise ValueError("Cannot update draft because it lacks a Gmail ID")
+
+    # Update in Gmail
+    gmail.update_draft(log.gmail_draft_id, log.recipient_email, subject, body, None)
+    
+    # Update locally
+    log.subject = subject
+    db.commit()
+    return {"status": "success", "message": "Draft updated"}
+
+def delete_draft(db: Session, user: User, draft_id: int) -> Dict[str, str]:
+    log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()
+    if not log:
+        raise LookupError("Draft not found locally")
+
+    gmail = GmailAdapter(user)
+    if not gmail.authenticate():
+        raise PermissionError("Gmail authentication failed")
+
+    if log.gmail_draft_id:
+        gmail.delete_draft(log.gmail_draft_id)
+        
+    log.status = "deleted"
+    db.commit()
+    return {"status": "success"}
 
 def send_draft_by_id(db: Session, user: User, draft_id: int) -> Dict[str, str]:
     log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()

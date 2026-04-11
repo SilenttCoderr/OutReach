@@ -4,6 +4,11 @@ from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
+class DraftUpdateRequest(BaseModel):
+    subject: str
+    body: str
 
 from src.application import campaign_service
 from src.api.dependencies import UPLOAD_DIR, get_authenticated_user, get_db_session, limiter
@@ -91,6 +96,48 @@ async def get_drafts(
     """Get all drafted emails for the user."""
     return campaign_service.get_draft_logs(db, user.id)
 
+@router.put("/draft/{draft_id}")
+async def update_draft(
+    draft_id: int,
+    payload: DraftUpdateRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db_session),
+):
+    """Update a drafted email subject and body in Gmail and local db."""
+    try:
+        return campaign_service.update_draft(db, user, draft_id, payload.subject, payload.body)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+@router.delete("/draft/{draft_id}")
+async def delete_draft(
+    draft_id: int,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db_session),
+):
+    """Delete a drafted email."""
+    try:
+        return campaign_service.delete_draft(db, user, draft_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+@router.post("/drafts/sync")
+async def sync_drafts(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db_session),
+):
+    """Force a manual sync of all draft logs."""
+    return campaign_service.get_draft_logs(db, user.id)
 
 @router.post("/send/{draft_id}")
 @limiter.limit("20/minute")

@@ -179,7 +179,72 @@ class GmailClient:
         except HttpError as e:
             print(f"Error sending draft: {e}")
             return None
-    
+
+    def get_draft(self, draft_id: str) -> Optional[Dict]:
+        """Fetch a specific draft."""
+        if not self.service:
+            if not self.authenticate():
+                return None
+        
+        try:
+            draft = self.service.users().drafts().get(
+                userId='me',
+                id=draft_id
+            ).execute()
+            return draft
+        except HttpError as e:
+            if e.resp.status == 404:
+                return {"error": "not_found"}
+            print(f"Error getting draft: {e}")
+            return None
+
+    def update_draft(
+        self,
+        draft_id: str,
+        to: str,
+        subject: str,
+        body: str,
+        attachment_paths: Optional[list] = None
+    ) -> Optional[Dict]:
+        """Update an existing draft."""
+        if not self.service:
+            if not self.authenticate():
+                return None
+        
+        try:
+            message = self._create_message(to, subject, body, attachment_paths)
+            draft = self.service.users().drafts().update(
+                userId='me',
+                id=draft_id,
+                body={'message': message}
+            ).execute()
+            
+            return {
+                'id': draft['id'],
+                'status': 'draft_updated'
+            }
+        except HttpError as e:
+            print(f"Error updating draft: {e}")
+            raise
+
+    def delete_draft(self, draft_id: str) -> bool:
+        """Delete an existing draft."""
+        if not self.service:
+            if not self.authenticate():
+                return False
+        
+        try:
+            self.service.users().drafts().delete(
+                userId='me',
+                id=draft_id
+            ).execute()
+            return True
+        except HttpError as e:
+            if e.resp.status == 404:
+                return True # already deleted
+            print(f"Error deleting draft: {e}")
+            return False
+
     def send_email(
         self,
         to: str,

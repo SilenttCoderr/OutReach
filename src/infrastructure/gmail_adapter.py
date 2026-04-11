@@ -26,3 +26,19 @@ class GmailAdapter:
 
     def send_draft(self, draft_id: str) -> Optional[Dict]:
         return self._client.send_draft(draft_id)
+
+    def get_draft(self, draft_id: str) -> Optional[Dict]:
+        return self._client.get_draft(draft_id)
+
+    def update_draft(
+        self,
+        draft_id: str,
+        recipient_email: str,
+        subject: str,
+        body: str,
+        attachment_paths: Optional[List[str]] = None,
+    ) -> Optional[Dict]:
+        return self._client.update_draft(draft_id, recipient_email, subject, body, attachment_paths)
+
+    def delete_draft(self, draft_id: str) -> bool:
+        return self._client.delete_draft(draft_id)
