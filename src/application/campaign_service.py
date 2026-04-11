@@ -324,18 +324,21 @@ def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
             if draft and draft.get("error") == "not_found":
                 # Draft was deleted manually in Gmail
                 log.status = "deleted"
+                _set_contact_status(db, user_id, log.recipient_email, "new")
                 has_changes = True
                 continue
         synced_logs.append(log)
-    
+
     if has_changes:
         db.commit()
-        
-    return synced_logs
-
-
-def update_draft(db: Session, user: User, draft_id: int, subject: str, body: str) -> Dict[str, str]:
-    log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()
+        # Re-fetch to avoid SQLAlchemy detached instance / expired attribute errors
+        # during FastAPI's background JSON serialization after a commit.
+        return (
+            db.query(EmailLog)
+            .filter(EmailLog.user_id == user_id, EmailLog.status == "draft")
+            .order_by(EmailLog.created_at.desc())
+            .all()
+        )
     if not log:
         raise LookupError("Draft not found locally")
         
@@ -365,8 +368,9 @@ def delete_draft(db: Session, user: User, draft_id: int) -> Dict[str, str]:
 
     if log.gmail_draft_id:
         gmail.delete_draft(log.gmail_draft_id)
-        
+
     log.status = "deleted"
+    _set_contact_status(db, user.id, log.recipient_email, "new")
     db.commit()
     return {"status": "success"}
 
