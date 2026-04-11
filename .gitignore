@@ -37,6 +37,7 @@ env/
 *.sqlite3
 *.db
 *.sqlite
+graphify-out
 
 # Node/Next.js
 web/node_modules/

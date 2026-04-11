@@ -467,7 +467,7 @@ def test_full_graph_fallback():
     results.append(ok)
 
     if original_key is not None:
-        os.environ["GEMINI_API_KEY"] = original_key
+        os.environ["GROQ_API_KEY"] = original_key
 
     return all(results)
 
@@ -477,8 +477,8 @@ def test_llm_generator_integration():
     header("Test: LLMEmailGenerator Integration")
     from src.llm_generator import LLMEmailGenerator
 
-    original_key = os.environ.get("GEMINI_API_KEY")
-    os.environ["GEMINI_API_KEY"] = "your_placeholder_key"
+    original_key = os.environ.get("GROQ_API_KEY")
+    os.environ["GROQ_API_KEY"] = "your_placeholder_key"
 
     gen = LLMEmailGenerator()
     results = []
@@ -519,7 +519,7 @@ def test_llm_generator_integration():
     results.append(ok)
 
     if original_key is not None:
-        os.environ["GEMINI_API_KEY"] = original_key
+        os.environ["GROQ_API_KEY"] = original_key
 
     return all(results)
 
@@ -547,7 +547,7 @@ def test_live_groq():
 
     used_fallback = r.get("used_fallback", False)
     fallback_reason = r.get("fallback_reason", "")
-    is_quota_error = "quota" in fallback_reason.lower() if fallback_reason else False
+    is_quota_error = ("quota" in fallback_reason.lower() or "rate limit" in fallback_reason.lower()) if fallback_reason else False
 
     if not used_fallback:
         # LLM actually generated the email
@@ -582,7 +582,7 @@ def test_live_groq():
 
     elif is_quota_error:
         # Quota exhausted — not a code bug, treat as soft pass
-        warning(f"Gemini API quota exhausted — fallback worked correctly")
+        warning("Groq API quota exhausted — fallback worked correctly")
         warning(f"Reason: {fallback_reason}")
         warning("Wait for quota reset or upgrade your plan, then retry")
         info(f"Elapsed: {elapsed:.0f}ms")

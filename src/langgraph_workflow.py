@@ -165,6 +165,7 @@ def call_llm(state: EmailState) -> dict:
     from groq import Groq
 
     api_key = os.getenv("GROQ_API_KEY")
+    print(f"api key is {api_key}")
     if not api_key:
         return {"error": "GROQ_API_KEY not set", "retry_count": 999}
     if api_key.startswith("your_") or len(api_key) < 10:
@@ -173,17 +174,16 @@ def call_llm(state: EmailState) -> dict:
             "retry_count": 999,
         }
 
-    model_name = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
+    model_name = "moonshotai/kimi-k2-instruct"
 
     try:
         client = Groq(api_key=api_key)
         response = client.chat.completions.create(
             model=model_name,
             messages=[{"role": "user", "content": state["prompt"]}],
-            temperature=1,
+            temperature=0,
             max_completion_tokens=8192,
             top_p=1,
-            reasoning_effort="medium",
             stop=None
         )
         text = response.choices[0].message.content.strip()
