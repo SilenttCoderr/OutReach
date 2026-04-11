@@ -114,8 +114,8 @@ Plans:
   3. The `/api/drafts` list fetches check against Gmail API existence to reflect true active draft status.
   4. The frontend Drafts page displays Edit/Delete controls and functions properly.
 **Plans**: 
-- [ ] 03.1-01-PLAN.md — Draft Sync and Delete Architecture
-- [ ] 03.1-02-PLAN.md — Draft Updates and UI Wiring
+- [x] 03.1-01-PLAN.md — Draft Sync and Delete Architecture
+- [x] 03.1-02-PLAN.md — Draft Updates and UI Wiring
 
 ### Phase 4: Security and Auth Hardening
 **Goal**: Strengthen auth and secret handling for production resilience and abuse resistance.
