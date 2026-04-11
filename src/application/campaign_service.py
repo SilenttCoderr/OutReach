@@ -206,6 +206,7 @@ def create_drafts_for_new_contacts(
     progress = []
     profile_errors = _validate_profile(user_profile)
     if profile_errors:
+        print(f"Profile validation failed for user {user.id}: {profile_errors}")
         return {
             "success": 0,
             "failed": len(contacts),
@@ -219,6 +220,7 @@ def create_drafts_for_new_contacts(
     for contact in contacts:
         contact_errors = _validate_contact(contact)
         if contact_errors:
+            print(f"Contact validation failed for contact {contact.email}: {contact_errors}")
             failed += 1
             progress.append({
                 "contact": contact.email,
@@ -275,6 +277,7 @@ def create_drafts_for_new_contacts(
                     "errors": ["Failed to create draft in Gmail"]
                 })
         except Exception as exc:
+            print(f"Exception during AI draft generation for {contact.email}: {exc}")
             failed += 1
             progress.append({
                 "contact": contact.email,
