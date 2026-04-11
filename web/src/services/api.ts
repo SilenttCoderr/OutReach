@@ -434,6 +434,34 @@ export async function fetchDrafts(): Promise<EmailLog[]> {
     });
 }
 
+export async function syncDrafts(): Promise<EmailLog[]> {
+    return requestJson<EmailLog[]>("/drafts/sync", {
+        method: "POST",
+        requiresAuth: true,
+        json: true,
+        fallbackError: "Failed to sync drafts with Gmail",
+    });
+}
+
+export async function updateDraft(draftId: number, subject: string, body: string): Promise<{ status: string }> {
+    return requestJson<{ status: string }>(`/draft/${draftId}`, {
+        method: "PUT",
+        requiresAuth: true,
+        json: true,
+        body: JSON.stringify({ subject, body }),
+        fallbackError: "Failed to update draft",
+    });
+}
+
+export async function deleteDraft(draftId: number): Promise<{ status: string }> {
+    return requestJson<{ status: string }>(`/draft/${draftId}`, {
+        method: "DELETE",
+        requiresAuth: true,
+        json: true,
+        fallbackError: "Failed to delete draft",
+    });
+}
+
 export async function sendDraft(draftId: number): Promise<SendDraftResponse> {
     return requestJson<SendDraftResponse>(`/send/${draftId}`, {
         method: "POST",
