@@ -46,7 +46,8 @@ export default function CampaignsPage() {
             if (data.success > 0) {
                 setMessage({ type: 'success', text: `Created ${data.success} draft(s) in your Gmail!` });
             } else if (data.failed > 0) {
-                setMessage({ type: 'error', text: `${data.failed} draft(s) failed. Check your profile and contacts.` });
+                const firstError = data.errors?.[0]?.errors?.[0] || 'Check your profile and contacts.';
+                setMessage({ type: 'error', text: `${data.failed} draft(s) failed: ${firstError}` });
             }
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Failed to generate drafts. Please try again.";
