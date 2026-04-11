@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, Send, ExternalLink, Loader2, Rocket } from "lucide-react";
-import { fetchDrafts, sendDraft, sendAllDrafts, type EmailLog } from "@/services/api";
-import { StatusBanner } from "@/components/ui/status-banner";
-
-export default function DraftsPage() {
+import { Mail, Send, ExternalLink, Loader2, Rocket, Trash2, Edit2, X, Check, RefreshCw } from "lucide-react";
+import { fetchDrafts, sendDraft, sendAllDrafts, deleteDraft, updateDraft, syncDrafts, type EmailLog } from "@/services/api";
     const [drafts, setDrafts] = useState<EmailLog[]>([]);
     const [sendingId, setSendingId] = useState<number | null>(null);
     const [sendingAll, setSendingAll] = useState(false);
     const [selectedDraft, setSelectedDraft] = useState<EmailLog | null>(null);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-
-    const loadDrafts = useCallback(async () => {
+    const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editSubject, setEditSubject] = useState("");
+    const [editBody, setEditBody] = useState("");
+    const [isDeleting, setIsDeleting] = useState<number | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
         try {
             const data = await fetchDrafts();
             setDrafts(data);
@@ -63,22 +63,61 @@ export default function DraftsPage() {
         }
     };
 
-    const pendingDrafts = drafts.filter(d => d.status === 'draft');
+    const handleDelete = async (id: number) => {
+        setIsDeleting(id);
+        setMessage(null);
+        try {
+            await deleteDraft(id);
+            setMessage({ type: 'success', text: "Draft deleted successfully!" });
+            if (selectedDraft?.id === id) {
+                setSelectedDraft(null);
+                setIsEditing(false);
+            }
+            await loadDrafts();
+        } catch {
+            setMessage({ type: 'error', text: "Failed to delete draft." });
+        } finally {
+            setIsDeleting(null);
+        }
+    };
 
-    return (
-        <div className="page-container animate-in">
-            {/* Header */}
-            <div className="section-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="section-title">Drafts</h1>
-                    <p className="section-description">{pendingDrafts.length} drafts ready to send</p>
-                </div>
+    const handleSync = async () => {
+        setIsSyncing(true);
+        setMessage({ type: 'info', text: "Syncing drafts with Gmail..." });
+        try {
+            await syncDrafts();
+            setMessage({ type: 'success', text: "Drafts synchronized successfully!" });
+            await loadDrafts();
+        } catch {
+            setMessage({ type: 'error', text: "Failed to synchronize drafts." });
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
-                {pendingDrafts.length > 0 && (
-                    <button onClick={handleSendAll} disabled={sendingAll} className="btn-primary">
-                        {sendingAll ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
+    const startEditing = () => {
+        if (!selectedDraft) return;
+        setEditSubject(selectedDraft.subject || "");
+        setEditBody(selectedDraft.body || "");
+        setIsEditing(true);
+    };
+
+    const saveEdit = async () => {
+        if (!selectedDraft) return;
+        setMessage(null);
+        try {
+            await updateDraft(selectedDraft.id, {
+                subject: editSubject,
+                body: editBody
+            });
+            setMessage({ type: 'success', text: "Draft updated successfully!" });
+            setIsEditing(false);
+            await loadDrafts();
+        } catch {
+            setMessage({ type: 'error', text: "Failed to update draft." });
+        }
+    };
+
                             <Rocket className="w-4 h-4" />
                         )}
                         {sendingAll ? "Sending..." : `Send All (${pendingDrafts.length})`}
