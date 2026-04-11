@@ -31,6 +31,7 @@ This roadmap upgrades OutreachPro from a fast-moving brownfield codebase to a pr
  (completed 2026-04-08)
 - [x] **Phase 3: Data and Pipeline Cohesion** - Unify tracking/state flows and stabilize send pipeline behavior.
  (completed 2026-04-07)
+- [ ] **Phase 3.1: Draft Management and Gmail Sync (INSERTED)** - Allow UI to edit/delete drafts and two-way sync deletion state with Gmail API.
 - [ ] **Phase 4: Security and Auth Hardening** - Harden token, secret, OAuth, and auth endpoint behavior.
 - [ ] **Phase 5: Observability and Runtime Reliability** - Add structured logging, dependency-aware health, and operational visibility.
 - [ ] **Phase 6: CI, Runbooks, and Release Safety** - Enforce verification gates and deployment rollback readiness.
@@ -102,6 +103,19 @@ Plans:
 Plans:
 - [x] 03-01: Unify tracking model and storage path
 - [x] 03-02: Harden pipeline transitions and migration notes
+
+### Phase 3.1: Draft Management and Gmail Sync (INSERTED)
+**Goal**: Allow users to edit generated drafts in UI, delete drafts, and actively synchronize manual deletions from Gmail before attempting sends.
+**Depends on**: Phase 3
+**Requirements**: [SYNC-01, SYNC-02, SYNC-03]
+**Success Criteria** (what must be TRUE):
+  1. A backend endpoint exists to update the subject/body of an existing draft via Gmail API.
+  2. A backend endpoint exists to softly or hard delete a draft from the EmailLog and Gmail.
+  3. The `/api/drafts` list fetches check against Gmail API existence to reflect true active draft status.
+  4. The frontend Drafts page displays Edit/Delete controls and functions properly.
+**Plans**: 
+- [ ] 03.1-01-PLAN.md — Draft Sync and Delete Architecture
+- [ ] 03.1-02-PLAN.md — Draft Updates and UI Wiring
 
 ### Phase 4: Security and Auth Hardening
 **Goal**: Strengthen auth and secret handling for production resilience and abuse resistance.
