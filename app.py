@@ -65,15 +65,22 @@ async def startup():
 
     try:
         inspector = inspect(engine)
-        columns = [col["name"] for col in inspector.get_columns("users")]
-        if "password_hash" not in columns:
+
+        users_cols = [col["name"] for col in inspector.get_columns("users")]
+        if "password_hash" not in users_cols:
             print("Adding password_hash column to users table...")
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
                 conn.commit()
             print("Password hash column added successfully.")
-        else:
-            print("Password hash column already exists.")
+
+        email_logs_cols = [col["name"] for col in inspector.get_columns("email_logs")]
+        if "body" not in email_logs_cols:
+            print("Adding body column to email_logs table...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE email_logs ADD COLUMN body TEXT"))
+                conn.commit()
+            print("Body column added successfully.")
     except Exception as e:
         print(f"Migration check: {e}")
 

@@ -106,10 +106,7 @@ export default function DraftsPage() {
         if (!selectedDraft) return;
         setMessage(null);
         try {
-            await updateDraft(selectedDraft.id, {
-                subject: editSubject,
-                body: editBody
-            });
+            await updateDraft(selectedDraft.id, editSubject, editBody);
             setMessage({ type: 'success', text: "Draft updated successfully!" });
             setIsEditing(false);
             await loadDrafts();
