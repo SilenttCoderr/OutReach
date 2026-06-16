@@ -258,6 +258,7 @@ def create_drafts_for_new_contacts(
                         recipient_name=contact.name,
                         company=contact.company,
                         subject=result["subject"],
+                        body=result.get("body"),
                         status="draft",
                         gmail_draft_id=draft_result.get("id"),
                     )
@@ -357,6 +358,7 @@ def update_draft(db: Session, user: User, draft_id: int, subject: str, body: str
     gmail.update_draft(log.gmail_draft_id, log.recipient_email, subject, body, None)
 
     log.subject = subject
+    log.body = body
     db.commit()
     return {"status": "success", "message": "Draft updated"}
 

@@ -209,8 +209,10 @@ export interface EmailLog {
     recipient_name: string;
     company: string;
     subject: string;
+    body?: string | null;
     status: string;
     created_at: string;
+    sent_at?: string | null;
 }
 
 export interface UserProfile {

@@ -68,6 +68,7 @@ class EmailLog(Base):
     company = Column(String(255), nullable=True)
     
     subject = Column(String(512), nullable=True)
+    body = Column(Text, nullable=True)
     status = Column(String(50), default="draft")  # draft, sent, failed
     
     created_at = Column(DateTime, default=datetime.utcnow)
