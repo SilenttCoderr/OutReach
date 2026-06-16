@@ -1,9 +1,8 @@
 import os
-from typing import Optional
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -15,12 +14,9 @@ from src.api.routes_admin import router as admin_router
 from src.api.routes_campaigns import router as campaigns_router
 from src.api.routes_contacts import router as contacts_router
 from src.api.routes_profile import router as profile_router
-from src.auth import get_current_user
 from src.auth_routes import router as auth_router
-from src.config import is_admin_email
 from src.config import validate_startup_configuration
 from src.database import Base, engine
-from src.models import User
 from src.stripe_routes import router as stripe_router
 
 # Load environment variables
@@ -57,9 +53,15 @@ app.add_middleware(
 async def startup():
     """Create database tables on startup and run migrations."""
     validate_startup_configuration()
-    Base.metadata.create_all(bind=engine)
 
     from sqlalchemy import inspect, text
+
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"ERROR: Could not connect to database on startup: {e}")
+        print("Server will start but all database operations will fail until DATABASE_URL is fixed.")
+        return
 
     try:
         inspector = inspect(engine)
@@ -104,21 +106,6 @@ app.include_router(admin_router, prefix="/api")
 async def root():
     """API root. Production frontend is served from Vercel (web/)."""
     return {"message": "OutreachPro API", "docs": "/docs", "health": "/health"}
-
-
-@app.get("/api/auth/status")
-async def auth_status(user: Optional[User] = Depends(get_current_user)):
-    """Check authentication status and Gmail connection state."""
-    if not user:
-        return {"authenticated": False}
-
-    return {
-        "authenticated": True,
-        "email": user.email,
-        "credits": user.credits,
-        "gmail_connected": bool(user.access_token),
-        "is_admin": is_admin_email(user.email),
-    }
 
 
 if __name__ == "__main__":
