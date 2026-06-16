@@ -1,22 +1,3 @@
-def _validate_contact(contact):
-    errors = []
-    if not contact.name:
-        errors.append("Missing recruiter_name")
-    if not contact.email or "@" not in contact.email:
-        errors.append("Missing or invalid recruiter_email")
-    if not contact.company:
-        errors.append("Missing company")
-    if not contact.role:
-        errors.append("Missing role")
-    return errors
-
-def _validate_profile(profile):
-    errors = []
-    required_fields = ["full_name", "current_title", "experience_summary"]
-    for field in required_fields:
-        if not profile.get(field):
-            errors.append(f"Missing {field} in profile")
-    return errors
 """Campaign and draft/send workflow orchestration services."""
 
 import time
@@ -29,6 +10,28 @@ from src.database import SessionLocal
 from src.email_generator import EmailGenerator
 from src.infrastructure.gmail_adapter import GmailAdapter
 from src.models import Contact, EmailLog, User
+
+
+def _validate_contact(contact):
+    errors = []
+    if not contact.name:
+        errors.append("Missing recruiter_name")
+    if not contact.email or "@" not in contact.email:
+        errors.append("Missing or invalid recruiter_email")
+    if not contact.company:
+        errors.append("Missing company")
+    if not contact.role:
+        errors.append("Missing role")
+    return errors
+
+
+def _validate_profile(profile):
+    errors = []
+    required_fields = ["full_name", "current_title", "experience_summary"]
+    for field in required_fields:
+        if not profile.get(field):
+            errors.append(f"Missing {field} in profile")
+    return errors
 
 
 def _get_generator(use_llm: bool):
@@ -144,7 +147,7 @@ def preview_emails(
     ]
 
     generator = _get_generator(use_llm)
-    
+
     try:
         user_profile = _get_user_profile(db, user_id)
     except ValueError as e:
@@ -156,11 +159,11 @@ def preview_emails(
         try:
             result = generator.generate(recruiter, user_profile=user_profile)
             preview = {
-                    "recruiter_name": recruiter.get("recruiter_name", ""),
-                    "recruiter_email": recruiter.get("recruiter_email", ""),
-                    "company": recruiter.get("company", ""),
-                    "subject": result["subject"],
-                    "body": result["body"],
+                "recruiter_name": recruiter.get("recruiter_name", ""),
+                "recruiter_email": recruiter.get("recruiter_email", ""),
+                "company": recruiter.get("company", ""),
+                "subject": result["subject"],
+                "body": result["body"],
             }
             if result.get("used_fallback"):
                 preview["warning"] = f"AI unavailable: {result.get('fallback_reason', 'unknown')}. Using template."
@@ -199,7 +202,6 @@ def create_drafts_for_new_contacts(
 
     generator = _get_generator(use_llm)
     user_profile = _get_user_profile(db, user.id)
-
 
     success = 0
     failed = 0
@@ -308,21 +310,20 @@ def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
         .order_by(EmailLog.created_at.desc())
         .all()
     )
-    
+
     if not logs or not user:
         return logs
 
     gmail = GmailAdapter(user)
     if not gmail.authenticate():
-        return logs # degrade gracefully
-        
+        return logs  # degrade gracefully
+
     synced_logs = []
     has_changes = False
     for log in logs:
         if log.gmail_draft_id:
             draft = gmail.get_draft(log.gmail_draft_id)
             if draft and draft.get("error") == "not_found":
-                # Draft was deleted manually in Gmail
                 log.status = "deleted"
                 _set_contact_status(db, user_id, log.recipient_email, "new")
                 has_changes = True
@@ -331,31 +332,34 @@ def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
 
     if has_changes:
         db.commit()
-        # Re-fetch to avoid SQLAlchemy detached instance / expired attribute errors
-        # during FastAPI's background JSON serialization after a commit.
         return (
             db.query(EmailLog)
             .filter(EmailLog.user_id == user_id, EmailLog.status == "draft")
             .order_by(EmailLog.created_at.desc())
             .all()
         )
+
+    return synced_logs
+
+
+def update_draft(db: Session, user: User, draft_id: int, subject: str, body: str) -> Dict[str, str]:
+    log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()
     if not log:
         raise LookupError("Draft not found locally")
-        
+
     gmail = GmailAdapter(user)
     if not gmail.authenticate():
         raise PermissionError("Gmail authentication failed")
-        
+
     if not log.gmail_draft_id:
         raise ValueError("Cannot update draft because it lacks a Gmail ID")
 
-    # Update in Gmail
     gmail.update_draft(log.gmail_draft_id, log.recipient_email, subject, body, None)
-    
-    # Update locally
+
     log.subject = subject
     db.commit()
     return {"status": "success", "message": "Draft updated"}
+
 
 def delete_draft(db: Session, user: User, draft_id: int) -> Dict[str, str]:
     log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()
@@ -373,6 +377,7 @@ def delete_draft(db: Session, user: User, draft_id: int) -> Dict[str, str]:
     _set_contact_status(db, user.id, log.recipient_email, "new")
     db.commit()
     return {"status": "success"}
+
 
 def send_draft_by_id(db: Session, user: User, draft_id: int) -> Dict[str, str]:
     log = db.query(EmailLog).filter(EmailLog.id == draft_id, EmailLog.user_id == user.id).first()
