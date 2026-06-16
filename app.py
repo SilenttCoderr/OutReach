@@ -57,9 +57,15 @@ app.add_middleware(
 async def startup():
     """Create database tables on startup and run migrations."""
     validate_startup_configuration()
-    Base.metadata.create_all(bind=engine)
 
     from sqlalchemy import inspect, text
+
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"ERROR: Could not connect to database on startup: {e}")
+        print("Server will start but all database operations will fail until DATABASE_URL is fixed.")
+        return
 
     try:
         inspector = inspect(engine)
