@@ -37,11 +37,11 @@ export default function CampaignsPage() {
             const data = await generateDrafts(useLLM, attachments);
             setResult(data);
             setProgress(data.progress || []);
-            if (data.drafts_created > 0) {
-                setMessage({ type: 'success', text: `Created ${data.drafts_created} draft(s) in your Gmail!` });
-            } else if (data.drafts_failed > 0) {
+            if (data.success > 0) {
+                setMessage({ type: 'success', text: `Created ${data.success} draft(s) in your Gmail!` });
+            } else if (data.failed > 0) {
                 const firstError = data.errors?.[0]?.errors?.[0] || 'Check your profile and contacts.';
-                setMessage({ type: 'error', text: `${data.drafts_failed} draft(s) failed: ${firstError}` });
+                setMessage({ type: 'error', text: `${data.failed} draft(s) failed: ${firstError}` });
             }
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Failed to generate drafts. Please try again.";
@@ -193,8 +193,8 @@ export default function CampaignsPage() {
                                 <div className="flex-1">
                                     <h4 className="font-semibold text-success">Generation Complete</h4>
                                     <p className="text-sm text-text-secondary">
-                                        Drafted {result.drafts_created} emails
-                                        {result.drafts_failed > 0 && <span className="text-error"> ({result.drafts_failed} failed)</span>}
+                                        Drafted {result.success} emails
+                                        {result.failed > 0 && <span className="text-error"> ({result.failed} failed)</span>}
                                     </p>
                                     {/* Error details */}
                                     {result.errors && result.errors.length > 0 && (
