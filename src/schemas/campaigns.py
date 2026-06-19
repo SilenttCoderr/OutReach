@@ -6,10 +6,12 @@ from pydantic import BaseModel
 
 
 class StatsResponse(BaseModel):
-    total: int
-    sent: int
-    draft: int
-    failed: int
+    credits_available: int
+    total_sent: int
+    total_drafted: int
+    pending: int
+    failed_emails: int
+    success_rate: Optional[float] = None
 
 
 class HistoryItemResponse(BaseModel):
@@ -49,10 +51,14 @@ class DraftRead(BaseModel):
 
 
 class DraftGenerationResponse(BaseModel):
-    message: str
-    drafts_created: int
-    drafts_failed: int
-    contacts_processed: int
+    success: int
+    failed: int
+    total: int
+    attachments: Optional[int] = None
+    remaining_credits: Optional[int] = None
+    message: Optional[str] = None
+    errors: Optional[List[Any]] = None
+    progress: Optional[List[Any]] = None
 
 
 class DraftUpdateRequest(BaseModel):
@@ -62,21 +68,23 @@ class DraftUpdateRequest(BaseModel):
 
 
 class DraftUpdateResponse(BaseModel):
-    message: str
+    status: str
+    message: Optional[str] = None
     draft: Optional[Dict[str, Any]] = None
 
 
 class SendDraftResponse(BaseModel):
-    message: str
+    status: str
+    message_id: Optional[str] = None
+    message: Optional[str] = None
 
 
 class SendAllDraftsResponse(BaseModel):
     message: str
-    sent_count: int
-    failed_count: int
-    total_drafts: int
+    queued: Optional[int] = None
+    delay_seconds: Optional[int] = None
 
 
 class ClearTrackingResponse(BaseModel):
-    message: str
-    deleted_count: int
+    status: str
+    email_logs_removed: int

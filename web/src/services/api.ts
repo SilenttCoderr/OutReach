@@ -191,10 +191,12 @@ export interface DraftGenerationProgress {
 }
 
 export interface DraftGenerationResponse {
-    message: string;
-    drafts_created: number;
-    drafts_failed: number;
-    contacts_processed: number;
+    success: number;
+    failed: number;
+    total: number;
+    attachments?: number;
+    remaining_credits?: number;
+    message?: string;
     errors?: DraftGenerationProgress[];
     progress?: DraftGenerationProgress[];
 }
@@ -206,9 +208,8 @@ export interface SendDraftResponse {
 
 export interface SendAllDraftsResponse {
     message: string;
-    sent_count: number;
-    failed_count: number;
-    total_drafts: number;
+    queued?: number;
+    delay_seconds?: number;
 }
 
 export interface EmailLog {
