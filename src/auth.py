@@ -1,5 +1,6 @@
 """Authentication module with Google OAuth and JWT."""
 
+import hashlib
 import os
 from datetime import datetime, timedelta
 from typing import Optional
@@ -71,30 +72,50 @@ def verify_token(token: str) -> Optional[dict]:
 
 
 # Password-reset tokens: short-lived, single-purpose. The "type" claim keeps
-# them from being usable as access tokens (and vice-versa).
+# them from being usable as access tokens (and vice-versa). The "pf" claim binds
+# the token to the password hash present at issuance, so once the password is
+# changed the token can't be replayed (the fingerprint no longer matches).
 RESET_TOKEN_EXPIRE_MINUTES = 30
 
 
-def create_reset_token(user_id: int) -> str:
-    """Create a short-lived JWT for password reset."""
+def password_fingerprint(password_hash: Optional[str]) -> str:
+    """Short, non-reversible fingerprint of a password hash, for token binding."""
+    return hashlib.sha256((password_hash or "").encode("utf-8")).hexdigest()[:16]
+
+
+def create_reset_token(user_id: int, password_hash: Optional[str]) -> str:
+    """Create a short-lived, single-use JWT for password reset."""
     expire = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
     return jwt.encode(
-        {"sub": str(user_id), "type": "reset", "exp": expire},
+        {
+            "sub": str(user_id),
+            "type": "reset",
+            "pf": password_fingerprint(password_hash),
+            "exp": expire,
+        },
         SECRET_KEY,
         algorithm=ALGORITHM,
     )
 
 
-def verify_reset_token(token: str) -> Optional[int]:
-    """Verify a password-reset token. Returns the user id, or None if invalid/expired."""
+def verify_reset_token(token: str) -> Optional[dict]:
+    """Verify a password-reset token.
+
+    Returns {"user_id": int, "pf": str} or None if invalid/expired. The caller
+    must still confirm "pf" matches the user's current password fingerprint to
+    enforce single use.
+    """
     payload = verify_token(token)
     if not payload or payload.get("type") != "reset":
         return None
     sub = payload.get("sub")
     try:
-        return int(sub) if sub is not None else None
+        user_id = int(sub) if sub is not None else None
     except (TypeError, ValueError):
         return None
+    if user_id is None:
+        return None
+    return {"user_id": user_id, "pf": payload.get("pf")}
 
 
 def get_current_user(

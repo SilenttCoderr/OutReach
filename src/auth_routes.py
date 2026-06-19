@@ -1,7 +1,7 @@
 """Authentication API routes."""
 
 import os
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, HTTPException, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from src.auth import (
     oauth,
     create_access_token,
     create_reset_token,
+    password_fingerprint,
     verify_reset_token,
     get_current_user,
     require_auth,
@@ -87,8 +88,25 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
+def _send_reset_email(to_email: str, name: str, reset_url: str) -> None:
+    """Build and send the reset email. Runs as a background task so the HTTP
+    response time does not leak whether an account exists (timing enumeration)."""
+    html = (
+        f"<p>Hi {name or 'there'},</p>"
+        f"<p>We received a request to reset your OutReach password. "
+        f"This link expires in 30 minutes.</p>"
+        f'<p><a href="{reset_url}">Reset your password</a></p>'
+        f"<p>If you didn't request this, you can safely ignore this email.</p>"
+    )
+    ResendAdapter().send(to=to_email, subject="Reset your OutReach password", html=html)
+
+
 @router.post("/forgot-password", response_model=MessageResponse)
-def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
+def forgot_password(
+    body: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     """Email a password-reset link. Always 200 — never reveal whether an email exists."""
     generic = {"message": "If an account with that email exists, a reset link has been sent."}
     email = body.email.strip().lower()
@@ -97,16 +115,11 @@ def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
     if not user or not user.password_hash:
         return generic
 
-    token = create_reset_token(user.id)
+    # Bind the token to the current password hash so it becomes single-use:
+    # once the password changes, the embedded fingerprint no longer matches.
+    token = create_reset_token(user.id, user.password_hash)
     reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
-    html = (
-        f"<p>Hi {user.name or 'there'},</p>"
-        f"<p>We received a request to reset your OutReach password. "
-        f"This link expires in 30 minutes.</p>"
-        f'<p><a href="{reset_url}">Reset your password</a></p>'
-        f"<p>If you didn't request this, you can safely ignore this email.</p>"
-    )
-    ResendAdapter().send(to=user.email, subject="Reset your OutReach password", html=html)
+    background_tasks.add_task(_send_reset_email, user.email, user.name or "", reset_url)
     return generic
 
 
@@ -118,18 +131,20 @@ def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must be at least 8 characters",
         )
-    user_id = verify_reset_token(body.token)
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset link",
-        )
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset link",
-        )
+    invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid or expired reset link",
+    )
+    data = verify_reset_token(body.token)
+    if data is None:
+        raise invalid
+    user = db.query(User).filter(User.id == data["user_id"]).first()
+    if not user or not user.password_hash:
+        raise invalid
+    # Enforce single use: the token's fingerprint must still match the current
+    # password hash. A previously-used token fails here (hash already rotated).
+    if data.get("pf") != password_fingerprint(user.password_hash):
+        raise invalid
     user.password_hash = hash_password(body.new_password)
     db.commit()
     return {"message": "Password updated. You can now log in."}
