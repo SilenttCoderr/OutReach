@@ -14,7 +14,9 @@ import {
     Sparkles,
     Clock
 } from "lucide-react";
-import { fetchStats, checkAuthStatus, type Stats } from "@/services/api";
+import { fetchStats, type Stats } from "@/services/api";
+import { useSafeTimeout } from "@/lib/timeout";
+import { StatCard } from "@/components/ui/stat-card";
 import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function DashboardPage() {
@@ -37,20 +39,17 @@ function DashboardContent() {
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info" | "success"; message: string } | null>(null);
 
+    const safeTimeout = useSafeTimeout();
+
     useEffect(() => {
         if (searchParams.get("payment") === "success") {
             setPaymentSuccess(true);
-            setTimeout(() => setPaymentSuccess(false), 5000);
+            safeTimeout(() => setPaymentSuccess(false), 5000);
         }
 
         async function loadData() {
             try {
                 setStatusMessage(null);
-                const authData = await checkAuthStatus();
-                if (!authData.authenticated) {
-                    router.push("/login");
-                    return;
-                }
                 const statsData = await fetchStats();
                 setStats(statsData);
             } catch {
@@ -62,8 +61,8 @@ function DashboardContent() {
                 setLoading(false);
             }
         }
-        loadData();
-    }, [router, searchParams]);
+        void loadData();
+    }, [searchParams]);
 
     const handleBuyCredits = () => {
         router.push("/pricing");
@@ -208,40 +207,6 @@ function DashboardContent() {
     );
 }
 
-function StatCard({
-    label,
-    value,
-    icon: Icon,
-    accent = false,
-    trend,
-    variant
-}: {
-    label: string;
-    value: number;
-    icon: React.ElementType;
-    accent?: boolean;
-    trend?: string;
-    variant?: 'warning';
-}) {
-    return (
-        <div className={`stat-card ${accent ? 'accent' : ''}`}>
-            <div className="flex items-center justify-between mb-3">
-                <div className={`p-2 rounded-lg ${variant === 'warning' ? 'bg-warning/10' :
-                    accent ? 'bg-accent/20' : 'bg-bg-elevated'
-                    }`}>
-                    <Icon className={`w-5 h-5 ${variant === 'warning' ? 'text-warning' :
-                        accent ? 'text-accent' : 'text-text-muted'
-                        }`} />
-                </div>
-                {trend && (
-                    <span className="text-xs text-success font-medium">{trend}</span>
-                )}
-            </div>
-            <div className="text-3xl font-bold text-text-primary mb-1">{value}</div>
-            <div className="text-sm text-text-secondary">{label}</div>
-        </div>
-    );
-}
 
 function ActionCard({
     title,

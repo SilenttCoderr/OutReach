@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Mail, Send, ExternalLink, Loader2, Rocket, Trash2, Edit2, X, Check, RefreshCw } from "lucide-react";
 import { fetchDrafts, sendDraft, sendAllDrafts, deleteDraft, updateDraft, syncDrafts, type EmailLog } from "@/services/api";
+import { useSafeTimeout } from "@/lib/timeout";
 import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function DraftsPage() {
+    const safeTimeout = useSafeTimeout();
     const [drafts, setDrafts] = useState<EmailLog[]>([]);
     const [sendingId, setSendingId] = useState<number | null>(null);
     const [sendingAll, setSendingAll] = useState(false);
@@ -55,7 +57,7 @@ export default function DraftsPage() {
         try {
             await sendAllDrafts();
             setMessage({ type: 'success', text: "Batch send started!" });
-            setTimeout(() => { void loadDrafts(); }, 2000);
+            safeTimeout(() => { void loadDrafts(); }, 2000);
         } catch {
             setMessage({ type: 'error', text: "Failed to start batch send." });
         } finally {

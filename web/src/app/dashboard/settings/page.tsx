@@ -1,25 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { User, CreditCard, Bell, Shield } from "lucide-react";
-import { checkAuthStatus } from "@/services/api";
 import { ConfirmActionDialog } from "@/components/ui/confirm-action-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SettingsPage() {
-    const [userEmail, setUserEmail] = useState<string>("");
-    const [credits, setCredits] = useState<number>(0);
+    const { status } = useAuth();
+    const userEmail = status?.email ?? "";
+    const credits = status?.credits ?? 0;
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info" | "success"; message: string } | null>(null);
-
-    useEffect(() => {
-        checkAuthStatus().then(data => {
-            if (data.authenticated) {
-                setUserEmail(data.email || "");
-                setCredits(data.credits || 0);
-            }
-        });
-    }, []);
 
     const handleConfirmDelete = async () => {
         setShowDeleteConfirm(false);
