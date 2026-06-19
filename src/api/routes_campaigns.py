@@ -4,20 +4,24 @@ from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-
-class DraftUpdateRequest(BaseModel):
-    subject: str
-    body: str
 
 from src.application import campaign_service
 from src.api.dependencies import UPLOAD_DIR, get_authenticated_user, get_db_session, limiter
 from src.models import User
+from src.schemas.campaigns import (
+    ClearTrackingResponse,
+    DraftGenerationResponse,
+    DraftUpdateRequest,
+    DraftUpdateResponse,
+    SendAllDraftsResponse,
+    SendDraftResponse,
+    StatsResponse,
+)
 
 router = APIRouter(tags=["Campaigns"])
 
 
-@router.get("/stats")
+@router.get("/stats", response_model=StatsResponse)
 async def get_stats(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),
@@ -48,7 +52,7 @@ async def preview_emails(
     return campaign_service.preview_emails(db, user.id, limit=limit, use_llm=use_llm)
 
 
-@router.post("/draft")
+@router.post("/draft", response_model=DraftGenerationResponse)
 @limiter.limit("20/minute")
 async def create_drafts(
     request: Request,
@@ -96,7 +100,7 @@ async def get_drafts(
     """Get all drafted emails for the user."""
     return campaign_service.get_draft_logs(db, user.id)
 
-@router.put("/draft/{draft_id}")
+@router.put("/draft/{draft_id}", response_model=DraftUpdateResponse)
 async def update_draft(
     draft_id: int,
     payload: DraftUpdateRequest,
@@ -139,7 +143,7 @@ async def sync_drafts(
     """Force a manual sync of all draft logs."""
     return campaign_service.get_draft_logs(db, user.id)
 
-@router.post("/send/{draft_id}")
+@router.post("/send/{draft_id}", response_model=SendDraftResponse)
 @limiter.limit("20/minute")
 async def send_draft(
     request: Request,
@@ -186,7 +190,7 @@ async def send_all_drafts(
     }
 
 
-@router.post("/clear-tracking")
+@router.post("/clear-tracking", response_model=ClearTrackingResponse)
 async def clear_tracking(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),

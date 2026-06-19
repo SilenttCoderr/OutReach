@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import Session
 
 from src.infrastructure.stripe_adapter import StripeAdapter
+from src.infrastructure.repositories.user_repository import UserRepository
 from src.models import User
 
 
@@ -51,7 +52,7 @@ class BillingService:
 
         try:
             credits_amount = int(metadata.get("credits_amount", 50))
-            user = db.query(User).filter(User.id == int(user_id)).first()
+            user = UserRepository(db).get_for_update(int(user_id))
             if not user:
                 return None
 

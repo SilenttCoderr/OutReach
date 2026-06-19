@@ -1,36 +1,15 @@
 """User profile CRUD API routes."""
 
-import json
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from src.api.dependencies import get_authenticated_user, get_db_session
 from src.models import User, UserProfile
+from src.schemas.profile import ProfileEnvelope, ProfilePayload
 
 router = APIRouter(tags=["Profile"])
-
-
-class ProfilePayload(BaseModel):
-    """Request body for creating/updating a profile."""
-
-    full_name: str = Field(..., min_length=1, max_length=255)
-    phone: Optional[str] = None
-    linkedin: Optional[str] = None
-    github: Optional[str] = None
-    portfolio: Optional[str] = None
-    degree: Optional[str] = None
-    university: Optional[str] = None
-    graduation_date: Optional[str] = None
-    current_title: Optional[str] = None
-    current_company: Optional[str] = None
-    experience_summary: Optional[str] = None
-    key_skills: list[str] = Field(default_factory=list)
-    highlights: list[str] = Field(default_factory=list)
-    preferred_roles: list[str] = Field(default_factory=list)
-    email_sign_off: str = "Best"
 
 
 @router.get("/profile")
@@ -70,9 +49,9 @@ async def upsert_profile(
     profile.current_title = payload.current_title
     profile.current_company = payload.current_company
     profile.experience_summary = payload.experience_summary
-    profile.key_skills = json.dumps(payload.key_skills) if payload.key_skills else None
-    profile.highlights = json.dumps(payload.highlights) if payload.highlights else None
-    profile.preferred_roles = json.dumps(payload.preferred_roles) if payload.preferred_roles else None
+    profile.key_skills = payload.key_skills or None
+    profile.highlights = payload.highlights or None
+    profile.preferred_roles = payload.preferred_roles or None
     profile.email_sign_off = payload.email_sign_off
 
     db.commit()

@@ -18,6 +18,7 @@ from src.auth import (
     hash_password,
     verify_password,
 )
+from src.schemas.auth import AuthStatusResponse, AuthTokenResponse, UserMeResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -36,7 +37,7 @@ class LoginRequest(BaseModel):
     password: str
 
 
-@router.post("/register")
+@router.post("/register", response_model=AuthTokenResponse)
 def register(body: RegisterRequest, db: Session = Depends(get_db)):
     """Register with email and password. Returns JWT on success."""
     existing = db.query(User).filter(User.email == body.email.strip().lower()).first()
@@ -58,7 +59,7 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@router.post("/login")
+@router.post("/login", response_model=AuthTokenResponse)
 def login(body: LoginRequest, db: Session = Depends(get_db)):
     """Login with email and password. Returns JWT on success. Google-only users have no password."""
     user = db.query(User).filter(User.email == body.email.strip().lower()).first()
@@ -132,20 +133,19 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         )
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserMeResponse)
 async def get_me(user: User = Depends(require_auth)):
     """Get current authenticated user."""
     return {
         "id": user.id,
         "email": user.email,
-        "name": user.name,
-        "picture": user.picture,
+        "name": user.name or "",
         "credits": user.credits,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "is_admin": is_admin_email(user.email),
     }
 
 
-@router.get("/status")
+@router.get("/status", response_model=AuthStatusResponse)
 async def auth_status(user: User = Depends(get_current_user)):
     """Check if user is authenticated."""
     if user:

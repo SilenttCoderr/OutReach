@@ -102,6 +102,12 @@ export function setAuthToken(token: string): void {
     }
 }
 
+export function syncTokenCookie(token: string): void {
+    if (typeof document !== "undefined") {
+        document.cookie = `token=${token}; path=/; SameSite=Lax`;
+    }
+}
+
 export interface Stats {
     credits_available: number;
     total_sent: number;
@@ -111,20 +117,20 @@ export interface Stats {
     success_rate?: number;
 }
 
-export interface Recruiter {
-    id?: string;
-    recruiter_name: string;
-    recruiter_email: string;
+export interface Contact {
+    id?: number;
+    name: string;
+    email: string;
     company: string;
     role: string;
     status?: string;
 }
 
+export type Recruiter = Contact;
+
 export interface UploadCsvResponse {
-    filename?: string;
-    total_contacts?: number;
-    new_added: number;
-    already_exists: number;
+    message: string;
+    contacts_added: number;
 }
 
 export interface ManualContactPayload {
@@ -134,9 +140,9 @@ export interface ManualContactPayload {
     role: string;
 }
 
-type RecruiterApiRecord = Partial<Recruiter> & {
-    name?: string;
-    email?: string;
+type ContactApiRecord = Partial<Contact> & {
+    recruiter_name?: string;
+    recruiter_email?: string;
 };
 
 export interface AuthTokenResponse {
@@ -185,10 +191,10 @@ export interface DraftGenerationProgress {
 }
 
 export interface DraftGenerationResponse {
-    success: number;
-    failed: number;
-    total?: number;
-    message?: string;
+    message: string;
+    drafts_created: number;
+    drafts_failed: number;
+    contacts_processed: number;
     errors?: DraftGenerationProgress[];
     progress?: DraftGenerationProgress[];
 }
@@ -199,8 +205,10 @@ export interface SendDraftResponse {
 }
 
 export interface SendAllDraftsResponse {
-    queued: number;
     message: string;
+    sent_count: number;
+    failed_count: number;
+    total_drafts: number;
 }
 
 export interface EmailLog {
@@ -269,11 +277,11 @@ function normalizeProfile(profile?: Partial<UserProfile> | null): UserProfile {
     };
 }
 
-function normalizeRecruiter(record: RecruiterApiRecord): Recruiter {
+function normalizeContact(record: ContactApiRecord): Contact {
     return {
         id: record.id,
-        recruiter_name: record.recruiter_name || record.name || "",
-        recruiter_email: record.recruiter_email || record.email || "",
+        name: record.name || record.recruiter_name || "",
+        email: record.email || record.recruiter_email || "",
         company: record.company || "",
         role: record.role || "",
         status: record.status,
@@ -377,30 +385,30 @@ export async function buyCredits(credits: number = 50, amount: number = 1000): P
     });
 }
 
-export async function fetchContacts(status?: string): Promise<Recruiter[]> {
+export async function fetchContacts(status?: string): Promise<Contact[]> {
     const query = status
         ? `/contacts?status=${encodeURIComponent(status)}&limit=100`
         : "/contacts?limit=100";
 
-    const contacts = await requestJson<RecruiterApiRecord[]>(query, {
+    const result = await requestJson<{ contacts: ContactApiRecord[] }>(query, {
         requiresAuth: true,
         json: true,
         fallbackError: "Failed to fetch contacts",
     });
 
-    return contacts.map(normalizeRecruiter);
+    return result.contacts.map(normalizeContact);
 }
 
-export async function updateContact(contactId: string, payload: ManualContactPayload): Promise<Recruiter> {
-    const contact = await requestJson<RecruiterApiRecord>(`/contacts/${contactId}`, {
+export async function updateContact(contactId: string | number, name: string, email: string, company: string, role: string): Promise<Contact> {
+    const contact = await requestJson<ContactApiRecord>(`/contacts/${contactId}`, {
         method: "PUT",
         requiresAuth: true,
         json: true,
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ name, email, company, role }),
         fallbackError: "Failed to update contact",
     });
 
-    return normalizeRecruiter(contact);
+    return normalizeContact(contact);
 }
 
 export async function deleteContact(contactId: string): Promise<{ deleted: boolean }> {
