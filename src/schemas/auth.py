@@ -15,6 +15,7 @@ class AuthStatusResponse(BaseModel):
     user_id: Optional[int] = None
     email: Optional[str] = None
     credits: Optional[int] = None
+    gmail_connected: Optional[bool] = None
     is_admin: Optional[bool] = None
 
 
