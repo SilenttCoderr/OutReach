@@ -57,3 +57,16 @@ class StripePort(Protocol):
         stripe_signature: Optional[str],
         webhook_secret: Optional[str],
     ) -> Dict: ...
+
+
+@runtime_checkable
+class EmailSenderPort(Protocol):
+    """System-level transactional email (password resets, notifications).
+
+    Distinct from GmailPort, which sends as the end user via their OAuth grant.
+    """
+
+    @property
+    def is_configured(self) -> bool: ...
+
+    def send(self, *, to: str, subject: str, html: str) -> bool: ...

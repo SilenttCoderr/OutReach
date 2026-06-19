@@ -368,6 +368,26 @@ export async function registerWithEmail(name: string, email: string, password: s
     });
 }
 
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+    return requestJson<{ message: string }>("/auth/forgot-password", {
+        method: "POST",
+        json: true,
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        fallbackError: "Failed to send reset email",
+        redirectOnUnauthorized: false,
+    });
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return requestJson<{ message: string }>("/auth/reset-password", {
+        method: "POST",
+        json: true,
+        body: JSON.stringify({ token, new_password: newPassword }),
+        fallbackError: "Failed to reset password",
+        redirectOnUnauthorized: false,
+    });
+}
+
 export async function checkAuthStatus(): Promise<AuthStatus> {
     const token = getStoredToken();
     if (!token) {
