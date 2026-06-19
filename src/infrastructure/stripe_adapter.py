@@ -9,12 +9,21 @@ class StripeAdapter:
     """Encapsulates Stripe SDK usage and exposes focused billing operations."""
 
     def __init__(self, api_key: Optional[str]):
+        # A publishable key (pk_) here is a common misconfiguration: server-side
+        # calls require the secret key (sk_). Fail loudly and early rather than
+        # surfacing an opaque Stripe error at checkout time.
+        if api_key and api_key.startswith("pk_"):
+            raise ValueError(
+                "STRIPE_SECRET_KEY is set to a publishable key (pk_...). "
+                "Server-side Stripe calls require the secret key (sk_...). "
+                "Check your environment variables."
+            )
         self.api_key = api_key
         stripe.api_key = api_key
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.api_key)
+        return bool(self.api_key) and self.api_key.startswith("sk_")
 
     def create_checkout_session(
         self,
