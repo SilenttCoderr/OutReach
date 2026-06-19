@@ -412,8 +412,8 @@ export async function updateContact(contactId: string | number, name: string, em
     return normalizeContact(contact);
 }
 
-export async function deleteContact(contactId: string): Promise<{ deleted: boolean }> {
-    return requestJson<{ deleted: boolean }>(`/contacts/${contactId}`, {
+export async function deleteContact(contactId: string): Promise<{ message: string }> {
+    return requestJson<{ message: string }>(`/contacts/${contactId}`, {
         method: "DELETE",
         requiresAuth: true,
         json: true,

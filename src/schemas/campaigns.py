@@ -14,42 +14,6 @@ class StatsResponse(BaseModel):
     success_rate: Optional[float] = None
 
 
-class HistoryItemResponse(BaseModel):
-    id: int
-    recruiter_email: str
-    subject: str
-    status: str
-    created_at: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class EmailLogRead(BaseModel):
-    id: int
-    recruiter_email: str
-    subject: str
-    body: Optional[str] = None
-    status: str
-    gmail_draft_id: Optional[str] = None
-    created_at: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class DraftRead(BaseModel):
-    id: int
-    recruiter_email: str
-    subject: str
-    body: Optional[str] = None
-    gmail_draft_id: Optional[str] = None
-    status: str
-
-    class Config:
-        from_attributes = True
-
-
 class DraftGenerationResponse(BaseModel):
     success: int
     failed: int
