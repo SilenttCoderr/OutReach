@@ -4,25 +4,24 @@ import shutil
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from src.application import contact_service
 from src.api.dependencies import UPLOAD_DIR, get_authenticated_user, get_db_session
 from src.models import User
+from src.schemas.contacts import (
+    ContactDeleteResponse,
+    ContactListResponse,
+    ContactPayload,
+    ContactRead,
+    UploadCsvResponse,
+)
 from src.storage import upload_file
 
 router = APIRouter(tags=["Contacts"])
 
 
-class ContactUpsertPayload(BaseModel):
-    recruiter_name: str = Field(..., min_length=1, max_length=255)
-    recruiter_email: str = Field(..., min_length=3, max_length=255)
-    company: str = Field(..., min_length=1, max_length=255)
-    role: str = Field(..., min_length=1, max_length=255)
-
-
-@router.get("/contacts")
+@router.get("/contacts", response_model=ContactListResponse)
 async def get_contacts(
     status: Optional[str] = None,
     limit: int = 100,
@@ -30,10 +29,11 @@ async def get_contacts(
     db: Session = Depends(get_db_session),
 ):
     """Get authenticated user's contacts from database."""
-    return contact_service.get_contacts(db, user.id, status=status, limit=limit)
+    contacts = contact_service.get_contacts(db, user.id, status=status, limit=limit)
+    return ContactListResponse(contacts=contacts)
 
 
-@router.post("/upload")
+@router.post("/upload", response_model=UploadCsvResponse)
 async def upload_csv(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -63,20 +63,18 @@ async def upload_csv(
 
     try:
         result = contact_service.process_uploaded_contacts(db, user, str(file_path))
-        return {
-            "filename": file.filename,
-            "total_contacts": result["total_contacts"],
-            "new_added": result["new_added"],
-            "already_exists": result["already_exists"],
-        }
+        return UploadCsvResponse(
+            message="Upload successful",
+            contacts_added=result.get("new_added", 0),
+        )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Processing Error: {str(exc)}")
 
 
-@router.put("/contacts/{contact_id}")
+@router.put("/contacts/{contact_id}", response_model=ContactRead)
 async def update_contact(
     contact_id: int,
-    payload: ContactUpsertPayload,
+    payload: ContactPayload,
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),
 ):
@@ -85,8 +83,8 @@ async def update_contact(
         db=db,
         user_id=user.id,
         contact_id=contact_id,
-        name=payload.recruiter_name,
-        email=payload.recruiter_email,
+        name=payload.name,
+        email=payload.email,
         company=payload.company,
         role=payload.role,
     )
@@ -94,17 +92,10 @@ async def update_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
-    return {
-        "id": contact.id,
-        "name": contact.name,
-        "email": contact.email,
-        "company": contact.company,
-        "role": contact.role,
-        "status": contact.status,
-    }
+    return contact
 
 
-@router.delete("/contacts/{contact_id}")
+@router.delete("/contacts/{contact_id}", response_model=ContactDeleteResponse)
 async def delete_contact(
     contact_id: int,
     user: User = Depends(get_authenticated_user),
@@ -115,4 +106,4 @@ async def delete_contact(
     if not deleted:
         raise HTTPException(status_code=404, detail="Contact not found")
 
-    return {"deleted": True}
+    return ContactDeleteResponse(message="Contact deleted")

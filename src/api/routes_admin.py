@@ -90,9 +90,4 @@ async def update_user_credits(
     db.commit()
     db.refresh(user)
 
-    return {
-        "id": user.id,
-        "email": user.email,
-        "name": user.name,
-        "credits": user.credits,
-    }
+    return _serialize_user(user, datetime.utcnow())

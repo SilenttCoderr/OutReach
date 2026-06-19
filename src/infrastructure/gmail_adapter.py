@@ -3,10 +3,11 @@
 from typing import Dict, List, Optional
 
 from src.gmail_client import GmailClient
+from src.domain.ports import GmailPort
 from src.models import User
 
 
-class GmailAdapter:
+class GmailAdapter(GmailPort):
     """Encapsulates Gmail client operations behind a small service-facing API."""
 
     def __init__(self, user: User):

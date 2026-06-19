@@ -1,10 +1,10 @@
 """SQLAlchemy models for the Cold Email Outreach SaaS."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from src.database import Base
-import json
+from src.infrastructure.types import JsonListType
 
 
 class User(Base):
@@ -31,8 +31,8 @@ class User(Base):
     last_login = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    email_logs = relationship("EmailLog", back_populates="user")
-    contacts = relationship("Contact", back_populates="user")
+    email_logs = relationship("EmailLog", back_populates="user", cascade="all, delete-orphan")
+    contacts = relationship("Contact", back_populates="user", cascade="all, delete-orphan")
 
 
 class Contact(Base):
@@ -103,10 +103,10 @@ class UserProfile(Base):
     current_company = Column(String(255), nullable=True)
     experience_summary = Column(Text, nullable=True)
 
-    # Outreach Config (JSON-encoded lists stored as Text for SQLite compat)
-    key_skills = Column(Text, nullable=True)        # JSON array
-    highlights = Column(Text, nullable=True)         # JSON array
-    preferred_roles = Column(Text, nullable=True)    # JSON array
+    # Outreach Config (lists persisted via JsonListType — no manual json.dumps/loads needed)
+    key_skills = Column(JsonListType, nullable=True)
+    highlights = Column(JsonListType, nullable=True)
+    preferred_roles = Column(JsonListType, nullable=True)
     email_sign_off = Column(String(100), default="Best")
 
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -117,14 +117,6 @@ class UserProfile(Base):
 
     def to_dict(self) -> dict:
         """Serialize profile for use in email generation."""
-        def _parse_json(val):
-            if not val:
-                return []
-            try:
-                return json.loads(val)
-            except (json.JSONDecodeError, TypeError):
-                return []
-
         return {
             "full_name": self.full_name or "",
             "phone": self.phone or "",
@@ -137,8 +129,8 @@ class UserProfile(Base):
             "current_title": self.current_title or "",
             "current_company": self.current_company or "",
             "experience_summary": self.experience_summary or "",
-            "key_skills": _parse_json(self.key_skills),
-            "highlights": _parse_json(self.highlights),
-            "preferred_roles": _parse_json(self.preferred_roles),
+            "key_skills": self.key_skills or [],
+            "highlights": self.highlights or [],
+            "preferred_roles": self.preferred_roles or [],
             "email_sign_off": self.email_sign_off or "Best",
         }
