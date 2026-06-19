@@ -26,6 +26,9 @@ function getStoredToken(): string | null {
 
 function redirectToLogin(): void {
     if (typeof window !== "undefined") {
+        // Clear the cookie too, else Edge middleware still sees a token on
+        // /login and bounces back to /dashboard -> 401 -> /login (reload loop).
+        clearTokenCookie();
         window.location.assign("/login");
     }
 }
@@ -105,6 +108,12 @@ export function setAuthToken(token: string): void {
 export function syncTokenCookie(token: string): void {
     if (typeof document !== "undefined") {
         document.cookie = `token=${token}; path=/; SameSite=Lax`;
+    }
+}
+
+export function clearTokenCookie(): void {
+    if (typeof document !== "undefined") {
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
     }
 }
 
@@ -359,6 +368,26 @@ export async function registerWithEmail(name: string, email: string, password: s
     });
 }
 
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+    return requestJson<{ message: string }>("/auth/forgot-password", {
+        method: "POST",
+        json: true,
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        fallbackError: "Failed to send reset email",
+        redirectOnUnauthorized: false,
+    });
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return requestJson<{ message: string }>("/auth/reset-password", {
+        method: "POST",
+        json: true,
+        body: JSON.stringify({ token, new_password: newPassword }),
+        fallbackError: "Failed to reset password",
+        redirectOnUnauthorized: false,
+    });
+}
+
 export async function checkAuthStatus(): Promise<AuthStatus> {
     const token = getStoredToken();
     if (!token) {
@@ -496,6 +525,7 @@ export function logout(): void {
         localStorage.removeItem("token");
         localStorage.removeItem("access_token");
     }
+    clearTokenCookie();
     redirectToLogin();
 }
 

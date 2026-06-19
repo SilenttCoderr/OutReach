@@ -25,3 +25,16 @@ class UserMeResponse(BaseModel):
     email: str
     credits: int
     is_admin: bool
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+class MessageResponse(BaseModel):
+    message: str

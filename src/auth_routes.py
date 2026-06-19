@@ -12,13 +12,23 @@ from src.config import is_admin_email
 from src.auth import (
     oauth,
     create_access_token,
+    create_reset_token,
+    verify_reset_token,
     get_current_user,
     require_auth,
     get_or_create_user,
     hash_password,
     verify_password,
 )
-from src.schemas.auth import AuthStatusResponse, AuthTokenResponse, UserMeResponse
+from src.infrastructure.resend_adapter import ResendAdapter
+from src.schemas.auth import (
+    AuthStatusResponse,
+    AuthTokenResponse,
+    ForgotPasswordRequest,
+    MessageResponse,
+    ResetPasswordRequest,
+    UserMeResponse,
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -75,6 +85,54 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
         )
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Email a password-reset link. Always 200 — never reveal whether an email exists."""
+    generic = {"message": "If an account with that email exists, a reset link has been sent."}
+    email = body.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    # Skip silently for unknown emails and Google-only accounts (no password to reset).
+    if not user or not user.password_hash:
+        return generic
+
+    token = create_reset_token(user.id)
+    reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
+    html = (
+        f"<p>Hi {user.name or 'there'},</p>"
+        f"<p>We received a request to reset your OutReach password. "
+        f"This link expires in 30 minutes.</p>"
+        f'<p><a href="{reset_url}">Reset your password</a></p>'
+        f"<p>If you didn't request this, you can safely ignore this email.</p>"
+    )
+    ResendAdapter().send(to=user.email, subject="Reset your OutReach password", html=html)
+    return generic
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Consume a reset token and set a new password."""
+    if len(body.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters",
+        )
+    user_id = verify_reset_token(body.token)
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link",
+        )
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link",
+        )
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+    return {"message": "Password updated. You can now log in."}
 
 
 @router.get("/google")

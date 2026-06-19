@@ -70,6 +70,33 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
+# Password-reset tokens: short-lived, single-purpose. The "type" claim keeps
+# them from being usable as access tokens (and vice-versa).
+RESET_TOKEN_EXPIRE_MINUTES = 30
+
+
+def create_reset_token(user_id: int) -> str:
+    """Create a short-lived JWT for password reset."""
+    expire = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+    return jwt.encode(
+        {"sub": str(user_id), "type": "reset", "exp": expire},
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
+def verify_reset_token(token: str) -> Optional[int]:
+    """Verify a password-reset token. Returns the user id, or None if invalid/expired."""
+    payload = verify_token(token)
+    if not payload or payload.get("type") != "reset":
+        return None
+    sub = payload.get("sub")
+    try:
+        return int(sub) if sub is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
@@ -81,7 +108,11 @@ def get_current_user(
     payload = verify_token(credentials.credentials)
     if not payload:
         return None
-    
+
+    # Reset tokens are not valid for authenticating API requests.
+    if payload.get("type") == "reset":
+        return None
+
     user_id = payload.get("sub")
     if not user_id:
         return None
