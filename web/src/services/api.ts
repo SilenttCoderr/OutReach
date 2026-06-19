@@ -26,6 +26,9 @@ function getStoredToken(): string | null {
 
 function redirectToLogin(): void {
     if (typeof window !== "undefined") {
+        // Clear the cookie too, else Edge middleware still sees a token on
+        // /login and bounces back to /dashboard -> 401 -> /login (reload loop).
+        clearTokenCookie();
         window.location.assign("/login");
     }
 }
@@ -105,6 +108,12 @@ export function setAuthToken(token: string): void {
 export function syncTokenCookie(token: string): void {
     if (typeof document !== "undefined") {
         document.cookie = `token=${token}; path=/; SameSite=Lax`;
+    }
+}
+
+export function clearTokenCookie(): void {
+    if (typeof document !== "undefined") {
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
     }
 }
 
@@ -496,6 +505,7 @@ export function logout(): void {
         localStorage.removeItem("token");
         localStorage.removeItem("access_token");
     }
+    clearTokenCookie();
     redirectToLogin();
 }
 
