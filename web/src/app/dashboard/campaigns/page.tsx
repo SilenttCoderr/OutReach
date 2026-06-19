@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
-import { generateDrafts, checkAuthStatus, getGoogleAuthUrl, DraftGenerationProgress, DraftGenerationResponse } from "@/services/api";
+import { generateDrafts, getGoogleAuthUrl, DraftGenerationProgress, DraftGenerationResponse } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { SwitchField } from "@/components/ui/switch-field";
 
@@ -13,16 +14,9 @@ export default function CampaignsPage() {
     const [result, setResult] = useState<DraftGenerationResponse | null>(null);
     const [progress, setProgress] = useState<DraftGenerationProgress[]>([]);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const [gmailConnected, setGmailConnected] = useState<boolean | null>(null); // null = loading
+    const { status: authStatus } = useAuth();
+    const gmailConnected = authStatus ? Boolean(authStatus.gmail_connected) : null;
     const googleAuthUrl = getGoogleAuthUrl();
-
-    useEffect(() => {
-        checkAuthStatus()
-            .then((status) => {
-                setGmailConnected(Boolean(status.gmail_connected));
-            })
-            .catch(() => setGmailConnected(false));
-    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -43,11 +37,11 @@ export default function CampaignsPage() {
             const data = await generateDrafts(useLLM, attachments);
             setResult(data);
             setProgress(data.progress || []);
-            if (data.success > 0) {
-                setMessage({ type: 'success', text: `Created ${data.success} draft(s) in your Gmail!` });
-            } else if (data.failed > 0) {
+            if (data.drafts_created > 0) {
+                setMessage({ type: 'success', text: `Created ${data.drafts_created} draft(s) in your Gmail!` });
+            } else if (data.drafts_failed > 0) {
                 const firstError = data.errors?.[0]?.errors?.[0] || 'Check your profile and contacts.';
-                setMessage({ type: 'error', text: `${data.failed} draft(s) failed: ${firstError}` });
+                setMessage({ type: 'error', text: `${data.drafts_failed} draft(s) failed: ${firstError}` });
             }
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Failed to generate drafts. Please try again.";
@@ -199,8 +193,8 @@ export default function CampaignsPage() {
                                 <div className="flex-1">
                                     <h4 className="font-semibold text-success">Generation Complete</h4>
                                     <p className="text-sm text-text-secondary">
-                                        Drafted {result.success} emails
-                                        {result.failed > 0 && <span className="text-error"> ({result.failed} failed)</span>}
+                                        Drafted {result.drafts_created} emails
+                                        {result.drafts_failed > 0 && <span className="text-error"> ({result.drafts_failed} failed)</span>}
                                     </p>
                                     {/* Error details */}
                                     {result.errors && result.errors.length > 0 && (

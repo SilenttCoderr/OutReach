@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Upload, Users, Search, Plus, X, Pencil, Trash2 } from "lucide-react";
-import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Recruiter, type ManualContactPayload } from "@/services/api";
+import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Contact, type ManualContactPayload } from "@/services/api";
 import { IconButton } from "@/components/ui/icon-button";
 import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function ContactsPage() {
-    const [contacts, setContacts] = useState<Recruiter[]>([]);
+    const [contacts, setContacts] = useState<Contact[]>([]);
     const [uploading, setUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -16,9 +16,9 @@ export default function ContactsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [addingManual, setAddingManual] = useState(false);
     const [editingContactId, setEditingContactId] = useState<string | null>(null);
-    const [manualForm, setManualForm] = useState<ManualContactPayload>({
-        recruiter_name: "",
-        recruiter_email: "",
+    const [manualForm, setManualForm] = useState<{ name: string; email: string; company: string; role: string }>({
+        name: "",
+        email: "",
         company: "",
         role: ""
     });
@@ -47,7 +47,7 @@ export default function ContactsPage() {
             const res = await uploadCSV(file);
             setMessage({
                 type: 'success',
-                text: `Uploaded ${res.new_added} new contacts (${res.already_exists} duplicates skipped)`
+                text: `Uploaded ${res.contacts_added} new contacts`
             });
             await loadContacts();
         } catch (error: unknown) {
@@ -59,7 +59,7 @@ export default function ContactsPage() {
     };
 
     const resetManualForm = () => {
-        setManualForm({ recruiter_name: "", recruiter_email: "", company: "", role: "" });
+        setManualForm({ name: "", email: "", company: "", role: "" });
         setEditingContactId(null);
     };
 
@@ -68,10 +68,10 @@ export default function ContactsPage() {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (contact: Recruiter) => {
+    const openEditModal = (contact: Contact) => {
         setManualForm({
-            recruiter_name: contact.recruiter_name || "",
-            recruiter_email: contact.recruiter_email || "",
+            name: contact.name || "",
+            email: contact.email || "",
             company: contact.company || "",
             role: contact.role || "",
         });
@@ -85,11 +85,16 @@ export default function ContactsPage() {
         setMessage(null);
         try {
             if (editingContactId) {
-                await updateContact(editingContactId, manualForm);
-                setMessage({ type: 'success', text: `Updated contact: ${manualForm.recruiter_name}` });
+                await updateContact(editingContactId, manualForm.name, manualForm.email, manualForm.company, manualForm.role);
+                setMessage({ type: 'success', text: `Updated contact: ${manualForm.name}` });
             } else {
-                await addManualContact(manualForm);
-                setMessage({ type: 'success', text: `Added contact: ${manualForm.recruiter_name}` });
+                await addManualContact({
+                    recruiter_name: manualForm.name,
+                    recruiter_email: manualForm.email,
+                    company: manualForm.company,
+                    role: manualForm.role,
+                });
+                setMessage({ type: 'success', text: `Added contact: ${manualForm.name}` });
             }
             setIsModalOpen(false);
             resetManualForm();
@@ -102,14 +107,14 @@ export default function ContactsPage() {
         }
     };
 
-    const handleDeleteContact = async (contact: Recruiter) => {
+    const handleDeleteContact = async (contact: Contact) => {
         const id = contact.id ? String(contact.id) : "";
         if (!id) {
             setMessage({ type: "error", text: "Cannot delete contact: missing contact id." });
             return;
         }
 
-        const confirmed = window.confirm(`Delete contact ${contact.recruiter_name || contact.recruiter_email}?`);
+        const confirmed = window.confirm(`Delete contact ${contact.name || contact.email}?`);
         if (!confirmed) {
             return;
         }
@@ -126,8 +131,8 @@ export default function ContactsPage() {
     };
 
     const filteredContacts = contacts.filter(c =>
-        c.recruiter_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.recruiter_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.company?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -222,16 +227,16 @@ export default function ContactsPage() {
                                 </tr>
                             ) : (
                                 filteredContacts.map((contact) => (
-                                    <tr key={contact.id || contact.recruiter_email} className="table-row">
+                                    <tr key={contact.id || contact.email} className="table-row">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium text-accent">
-                                                    {contact.recruiter_name?.split(' ').map(n => n[0]).join('') || '?'}
+                                                    {contact.name?.split(' ').map(n => n[0]).join('') || '?'}
                                                 </div>
-                                                <span className="font-medium text-text-primary">{contact.recruiter_name || "-"}</span>
+                                                <span className="font-medium text-text-primary">{contact.name || "-"}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-text-secondary">{contact.recruiter_email || "-"}</td>
+                                        <td className="px-6 py-4 text-text-secondary">{contact.email || "-"}</td>
                                         <td className="px-6 py-4 text-text-primary">{contact.company || "-"}</td>
                                         <td className="px-6 py-4 text-text-secondary">{contact.role || "-"}</td>
                                         <td className="px-6 py-4">
@@ -247,13 +252,13 @@ export default function ContactsPage() {
                                             <div className="flex items-center justify-end gap-2">
                                                 <IconButton
                                                     onClick={() => openEditModal(contact)}
-                                                    label={`Edit ${contact.recruiter_name || contact.recruiter_email}`}
+                                                    label={`Edit ${contact.name || contact.email}`}
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </IconButton>
                                                 <IconButton
                                                     onClick={() => void handleDeleteContact(contact)}
-                                                    label={`Delete ${contact.recruiter_name || contact.recruiter_email}`}
+                                                    label={`Delete ${contact.name || contact.email}`}
                                                 >
                                                     <Trash2 className="w-4 h-4 text-status-error" />
                                                 </IconButton>
@@ -293,8 +298,8 @@ export default function ContactsPage() {
                                 <input 
                                     className="input" 
                                     required
-                                    value={manualForm.recruiter_name}
-                                    onChange={e => setManualForm({...manualForm, recruiter_name: e.target.value})}
+                                    value={manualForm.name}
+                                    onChange={e => setManualForm({...manualForm, name: e.target.value})}
                                     placeholder="e.g. Sarah Connor"
                                 />
                             </div>
@@ -304,8 +309,8 @@ export default function ContactsPage() {
                                     className="input" 
                                     type="email"
                                     required
-                                    value={manualForm.recruiter_email}
-                                    onChange={e => setManualForm({...manualForm, recruiter_email: e.target.value})}
+                                    value={manualForm.email}
+                                    onChange={e => setManualForm({...manualForm, email: e.target.value})}
                                     placeholder="sarah@example.com"
                                 />
                             </div>

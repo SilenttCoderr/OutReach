@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
     LayoutDashboard,
     Users,
@@ -16,7 +16,8 @@ import {
     UserCircle,
     Shield,
 } from "lucide-react";
-import { checkAuthStatus, logout } from "@/services/api";
+import { logout } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
 import { IconButton } from "@/components/ui/icon-button";
 
 const workspaceNavItems = [
@@ -39,20 +40,8 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     const pathname = usePathname();
-    const [isAdmin, setIsAdmin] = useState(false);
-
-    useEffect(() => {
-        async function loadAuthStatus() {
-            try {
-                const status = await checkAuthStatus();
-                setIsAdmin(Boolean(status.is_admin));
-            } catch {
-                setIsAdmin(false);
-            }
-        }
-
-        void loadAuthStatus();
-    }, []);
+    const { status } = useAuth();
+    const isAdmin = Boolean(status?.is_admin);
 
     const preferences = useMemo(() => {
         if (!isAdmin) {

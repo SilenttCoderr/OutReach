@@ -3,7 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { setAuthToken } from "@/services/api";
+import { setAuthToken, syncTokenCookie } from "@/services/api";
 
 function AuthCallback() {
     const router = useRouter();
@@ -15,6 +15,7 @@ function AuthCallback() {
 
         if (token) {
             setAuthToken(token);
+            syncTokenCookie(token);
             // Full page navigation so dashboard loads with token visible (fixes redirect-to-login race)
             window.location.assign("/dashboard");
         } else if (error) {

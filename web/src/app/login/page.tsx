@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
-import { getGoogleAuthUrl, loginWithEmail, setAuthToken } from "@/services/api";
+import { getGoogleAuthUrl, loginWithEmail, setAuthToken, syncTokenCookie } from "@/services/api";
 import { AuthCard } from "@/components/ui/auth-card";
 import { StatusBanner } from "@/components/ui/status-banner";
 
@@ -46,6 +46,7 @@ function LoginForm() {
         try {
             const { access_token } = await loginWithEmail(email, password);
             setAuthToken(access_token);
+            syncTokenCookie(access_token);
             window.location.assign(nextPath);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Invalid email or password");

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { RefreshCw, Search, Shield, UserRound, Activity, MailCheck, Coins, Send, FileText } from "lucide-react";
-import { checkAuthStatus, fetchAdminOverview, updateUserCredits, type AdminOverview } from "@/services/api";
+import { fetchAdminOverview, updateUserCredits, type AdminOverview } from "@/services/api";
+import { StatCard } from "@/components/ui/stat-card";
 import { StatusBanner } from "@/components/ui/status-banner";
 
 const EMPTY_OVERVIEW: AdminOverview = {
@@ -33,7 +33,6 @@ function formatDate(value?: string | null): string {
 }
 
 export default function AdminPage() {
-    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [forbidden, setForbidden] = useState(false);
     const [overview, setOverview] = useState<AdminOverview>(EMPTY_OVERVIEW);
@@ -52,17 +51,6 @@ export default function AdminPage() {
     useEffect(() => {
         async function initialize() {
             try {
-                const auth = await checkAuthStatus();
-                if (!auth.authenticated) {
-                    router.push("/login");
-                    return;
-                }
-
-                if (!auth.is_admin) {
-                    setForbidden(true);
-                    return;
-                }
-
                 await loadOverview();
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to load admin dashboard.");
@@ -72,7 +60,7 @@ export default function AdminPage() {
         }
 
         void initialize();
-    }, [router]);
+    }, []);
 
     const users = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -151,13 +139,13 @@ export default function AdminPage() {
             {success && <StatusBanner type="success" message={success} className="mb-6" />}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <MetricCard icon={UserRound} label="Total Accounts" value={overview.metrics.total_users} />
-                <MetricCard icon={Activity} label="Live (30d)" value={overview.metrics.live_accounts_30d} />
-                <MetricCard icon={MailCheck} label="Gmail Connected" value={overview.metrics.gmail_connected_accounts} />
-                <MetricCard icon={Coins} label="Total Credits" value={overview.metrics.total_credits} />
-                <MetricCard icon={Shield} label="Total Contacts" value={overview.metrics.total_contacts} />
-                <MetricCard icon={Send} label="Sent Emails" value={overview.metrics.total_sent_emails} />
-                <MetricCard icon={FileText} label="Draft Emails" value={overview.metrics.total_draft_emails} />
+                <StatCard icon={UserRound} label="Total Accounts" value={overview.metrics.total_users} />
+                <StatCard icon={Activity} label="Live (30d)" value={overview.metrics.live_accounts_30d} />
+                <StatCard icon={MailCheck} label="Gmail Connected" value={overview.metrics.gmail_connected_accounts} />
+                <StatCard icon={Coins} label="Total Credits" value={overview.metrics.total_credits} />
+                <StatCard icon={Shield} label="Total Contacts" value={overview.metrics.total_contacts} />
+                <StatCard icon={Send} label="Sent Emails" value={overview.metrics.total_sent_emails} />
+                <StatCard icon={FileText} label="Draft Emails" value={overview.metrics.total_draft_emails} />
             </div>
 
             <div className="mb-4 relative max-w-md">
@@ -268,24 +256,3 @@ export default function AdminPage() {
     );
 }
 
-function MetricCard({
-    icon: Icon,
-    label,
-    value,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value: number;
-}) {
-    return (
-        <div className="stat-card">
-            <div className="flex items-center justify-between mb-3">
-                <div className="p-2 rounded-lg bg-bg-elevated">
-                    <Icon className="w-5 h-5 text-text-muted" />
-                </div>
-            </div>
-            <div className="text-3xl font-bold text-text-primary mb-1">{value}</div>
-            <div className="text-sm text-text-secondary">{label}</div>
-        </div>
-    );
-}

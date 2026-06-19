@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { fetchProfile, upsertProfile, type UserProfile, checkAuthStatus } from "@/services/api";
+import { fetchProfile, upsertProfile, type UserProfile } from "@/services/api";
 import { Save, Plus, X, UserCircle } from "lucide-react";
 import { StatusBanner } from "@/components/ui/status-banner";
 
@@ -21,7 +20,6 @@ function hasSubmittedProfile(profile: UserProfile): boolean {
 }
 
 export default function ProfilePage() {
-    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -44,11 +42,6 @@ export default function ProfilePage() {
     useEffect(() => {
         async function loadProfile() {
             try {
-                const authData = await checkAuthStatus();
-                if (!authData.authenticated) {
-                    router.push("/login");
-                    return;
-                }
                 const data = await fetchProfile();
                 const normalizedProfile: UserProfile = {
                     ...data,
@@ -66,7 +59,7 @@ export default function ProfilePage() {
             }
         }
         loadProfile();
-    }, [router]);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
