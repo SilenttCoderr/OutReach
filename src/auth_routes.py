@@ -11,7 +11,7 @@ from src.models import User
 from src.config import is_admin_email
 from src.auth import (
     oauth,
-    create_access_token,
+    create_login_token,
     create_reset_token,
     password_fingerprint,
     verify_reset_token,
@@ -66,7 +66,7 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    token = create_access_token(data={"sub": str(user.id)})
+    token = create_login_token(user)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -84,7 +84,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
-    token = create_access_token(data={"sub": str(user.id)})
+    token = create_login_token(user)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -193,7 +193,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         )
         
         # Create JWT token
-        access_token = create_access_token(data={"sub": str(user.id)})
+        access_token = create_login_token(user)
         
         # Redirect to frontend with token
         return RedirectResponse(
