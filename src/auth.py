@@ -62,6 +62,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def create_login_token(user: User) -> str:
+    """Access token bound to the user's current password hash (see get_current_user)."""
+    return create_access_token(
+        {"sub": str(user.id), "pf": password_fingerprint(user.password_hash)}
+    )
+
+
 def verify_token(token: str) -> Optional[dict]:
     """Verify and decode a JWT token."""
     try:
@@ -137,8 +144,17 @@ def get_current_user(
     user_id = payload.get("sub")
     if not user_id:
         return None
-    
+
     user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        return None
+
+    # Sessions die when the password changes: tokens carry a fingerprint of the
+    # password hash at issuance. Tokens minted before this feature have no "pf"
+    # claim and are grandfathered in (no forced logout on deploy).
+    token_pf = payload.get("pf")
+    if token_pf is not None and token_pf != password_fingerprint(user.password_hash):
+        return None
     return user
 
 
