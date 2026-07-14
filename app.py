@@ -65,8 +65,9 @@ def run_startup_migrations() -> None:
         print("Password hash column added successfully.")
     if "templates_seeded_at" not in users_cols:
         print("Adding templates_seeded_at column to users table...")
+        timestamp_type = "TIMESTAMP" if engine.dialect.name == "postgresql" else "DATETIME"
         with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE users ADD COLUMN templates_seeded_at DATETIME"))
+            conn.execute(text(f"ALTER TABLE users ADD COLUMN templates_seeded_at {timestamp_type}"))
             conn.commit()
         print("Template seed marker added successfully.")
 
