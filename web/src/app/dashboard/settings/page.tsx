@@ -1,137 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { User, CreditCard, Bell, Shield } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CreditCard, ShieldAlert, User } from "lucide-react";
 import { ConfirmActionDialog } from "@/components/ui/confirm-action-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function SettingsPage() {
     const { status } = useAuth();
-    const userEmail = status?.email ?? "";
-    const credits = status?.credits ?? 0;
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info" | "success"; message: string } | null>(null);
+    const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+    const [message, setMessage] = useState<{ type: "error" | "info" | "success"; text: string } | null>(null);
 
-    const handleConfirmDelete = async () => {
-        setShowDeleteConfirm(false);
-        setStatusMessage({
-            type: "info",
-            message: "Delete account is not enabled yet. Please contact support to remove your account.",
-        });
-    };
+    return <div className="page-container animate-in">
+        <div className="section-header max-w-2xl"><p className="coach-kicker">Account settings</p><h1 className="section-title mt-3">Account, credits, and clear boundaries.</h1><p className="section-description">Manage the parts of OutreachPro that affect sign-in and billing. Your outreach context stays in Profile.</p></div>
+        {message && <StatusBanner type={message.type} message={message.text} className="mb-6" />}
 
-    const sections = [
-        {
-            icon: User,
-            title: "Account",
-            description: "Manage your account details",
-            items: [
-                { label: "Email", value: userEmail || "-" },
-                { label: "Plan", value: "Free" },
-            ]
-        },
-        {
-            icon: CreditCard,
-            title: "Credits & Billing",
-            description: "Manage credits and payments",
-            items: [
-                { label: "Available Credits", value: credits.toString() },
-                { label: "Payment Method", value: "Stripe" },
-            ]
-        },
-        {
-            icon: Bell,
-            title: "Notifications",
-            description: "Configure notifications",
-            items: [
-                { label: "Email Notifications", value: "Enabled" },
-                { label: "Weekly Reports", value: "Disabled" },
-            ]
-        },
-    ];
+        <div className="mx-auto grid max-w-4xl gap-5">
+            <section className="workspace-table p-5 sm:p-7"><div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-muted text-accent"><User className="h-5 w-5" /></span><div className="min-w-0 flex-1"><p className="data-line">Sign-in</p><h2 className="mt-2 text-xl font-bold tracking-tight text-text-primary">Your account</h2><dl className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-[8rem_1fr]"><dt className="text-sm text-text-secondary">Email address</dt><dd className="truncate text-sm font-semibold text-text-primary">{status?.email || "—"}</dd></dl></div></div></section>
 
-    return (
-        <div className="page-container animate-in">
-            <div className="max-w-2xl mx-auto">
-                {/* Header */}
-                <div className="section-header">
-                    <h1 className="section-title">Settings</h1>
-                    <p className="section-description">Manage your account and preferences</p>
-                </div>
+            <section className="workspace-table p-5 sm:p-7"><div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between"><div className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-muted text-accent"><CreditCard className="h-5 w-5" /></span><div><p className="data-line">Credits</p><h2 className="mt-2 text-xl font-bold tracking-tight text-text-primary">Draft-generation balance</h2><p className="mt-3 font-mono text-4xl font-bold tracking-tight text-text-primary">{status?.credits ?? 0}</p><p className="mt-1 text-sm text-text-secondary">credits available for new drafts</p></div></div><Link href="/pricing" className="btn-primary shrink-0 text-sm">Add credits <ArrowRight className="h-4 w-4" /></Link></div></section>
 
-                {statusMessage && (
-                    <StatusBanner
-                        type={statusMessage.type}
-                        message={statusMessage.message}
-                        className="mb-4"
-                    />
-                )}
-
-                {/* Sections */}
-                <div className="space-y-4">
-                    {sections.map((section) => (
-                        <div key={section.title} className="card p-6">
-                            <div className="flex items-start gap-4 mb-4">
-                                <div className="p-2.5 rounded-lg bg-bg-elevated">
-                                    <section.icon className="w-5 h-5 text-text-muted" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-text-primary">{section.title}</h3>
-                                    <p className="text-sm text-text-secondary">{section.description}</p>
-                                </div>
-                            </div>
-
-                            <div className="border-t border-border pt-4 space-y-3">
-                                {section.items.map((item) => (
-                                    <div key={item.label} className="flex items-center justify-between">
-                                        <span className="text-sm text-text-secondary">{item.label}</span>
-                                        <span className="text-sm font-medium text-text-primary">{item.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-
-                    {/* Danger Zone */}
-                    <div className="card p-6 border-error/30">
-                        <div className="flex items-start gap-4 mb-4">
-                            <div className="p-2.5 rounded-lg bg-error/10">
-                                <Shield className="w-5 h-5 text-error" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-error">Danger Zone</h3>
-                                <p className="text-sm text-text-secondary">Irreversible actions</p>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-border pt-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-text-primary">Delete Account</p>
-                                    <p className="text-xs text-text-muted">Permanently delete your data</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="btn-ghost text-error border-error/30 hover:bg-error/10 text-sm"
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <ConfirmActionDialog
-                    open={showDeleteConfirm}
-                    title="Delete account"
-                    description="This action is irreversible. Are you sure you want to continue?"
-                    confirmLabel="Delete account"
-                    onCancel={() => setShowDeleteConfirm(false)}
-                    onConfirm={handleConfirmDelete}
-                />
-            </div>
+            <section className="danger-panel p-5 sm:p-7"><div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-error-muted text-error"><ShieldAlert className="h-5 w-5" /></span><div><p className="data-line text-error">Danger zone</p><h2 className="mt-2 text-xl font-bold tracking-tight text-text-primary">Need to step away?</h2><p className="mt-2 max-w-xl text-sm leading-6 text-text-secondary">Request deactivation through support. This does not delete your account from this screen.</p></div></div><button type="button" onClick={() => setShowDeactivateConfirm(true)} className="btn-primary shrink-0 bg-error hover:bg-error/90 text-sm">Request deactivation</button></div></section>
         </div>
-    );
+
+        <ConfirmActionDialog open={showDeactivateConfirm} title="Request account deactivation" description="This opens the support path only. Your account, credits, contacts, and drafts will not be deleted from this screen." confirmLabel="Show support instructions" onCancel={() => setShowDeactivateConfirm(false)} onConfirm={() => { setShowDeactivateConfirm(false); setMessage({ type: "info", text: "Contact support from your account email to request deactivation. No account data was changed." }); }} />
+    </div>;
 }

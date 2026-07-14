@@ -25,12 +25,23 @@ export function ConfirmActionDialog({
     onConfirm,
 }: ConfirmActionDialogProps) {
     const [confirming, setConfirming] = React.useState(false);
+    const dialogRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (!open) {
             setConfirming(false);
+            return;
         }
-    }, [open]);
+
+        dialogRef.current?.focus();
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !confirming) {
+                onCancel();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [open, confirming, onCancel]);
 
     if (!open) {
         return null;
@@ -54,7 +65,7 @@ export function ConfirmActionDialog({
                 onClick={onCancel}
             />
 
-            <div className="relative w-full max-w-md card p-6">
+            <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="confirmation-dialog-title" aria-describedby="confirmation-dialog-description" tabIndex={-1} className="relative w-full max-w-md card p-6">
                 <IconButton
                     className="absolute right-4 top-4"
                     label="Close confirmation dialog"
@@ -68,8 +79,8 @@ export function ConfirmActionDialog({
                         <AlertTriangle className="w-5 h-5 text-warning" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-                        <p className="text-sm text-text-secondary mt-1">{description}</p>
+                        <h2 id="confirmation-dialog-title" className="text-lg font-semibold text-text-primary">{title}</h2>
+                        <p id="confirmation-dialog-description" className="text-sm text-text-secondary mt-1">{description}</p>
                     </div>
                 </div>
 

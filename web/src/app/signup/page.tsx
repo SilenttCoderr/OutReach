@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MoveLeft, Check } from "lucide-react";
-import { getGoogleAuthUrl, registerWithEmail, setAuthToken } from "@/services/api";
+import { getGoogleAuthUrl, registerWithEmail, setAuthToken, syncTokenCookie } from "@/services/api";
 import { AuthCard } from "@/components/ui/auth-card";
 import { StatusBanner } from "@/components/ui/status-banner";
 
@@ -33,6 +33,7 @@ export default function SignUpPage() {
         try {
             const { access_token } = await registerWithEmail(name, email, password);
             setAuthToken(access_token);
+            syncTokenCookie(access_token);
             window.location.assign("/dashboard");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Registration failed");

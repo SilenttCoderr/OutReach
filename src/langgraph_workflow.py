@@ -36,6 +36,7 @@ class EmailState(TypedDict, total=False):
     company_type: str
     notes: str
     prompt: str
+    prompt_instructions: str
     llm_response: str
     subject: str
     body: str
@@ -95,6 +96,7 @@ def build_prompt(state: EmailState) -> dict:
     company = state["company"]
     company_type = state["company_type"]
     notes = state["notes"]
+    prompt_instructions = state.get("prompt_instructions", "").strip()
     
     # Profile data
     profile = state["user_profile"]
@@ -111,6 +113,7 @@ def build_prompt(state: EmailState) -> dict:
     highlights = "\\n".join([f"- {h}" for h in profile.get("highlights", [])])
     
     sign_off = profile.get("email_sign_off", "Best")
+    signature = sign_off if full_name in sign_off else f"{sign_off}\n{full_name}"
 
 
     prompt = f"""Role: You are a Technical Career Strategist. Your goal is to write a short, high-impact cold email for {full_name} to recruiters.
@@ -141,6 +144,9 @@ Tone: Direct, technical, and confident. Use "I've been building..." instead of "
 
 Constraints: Max 4 sentences in the body. No "I hope you are well."
 
+Extra personalization instructions:
+{prompt_instructions or "No extra instructions provided."}
+
 Variables:
 
 Recruiter: {recruiter_name} (First name: {first_name})
@@ -152,8 +158,8 @@ Format: Subject: [subject line]
 
 [body]
 
-{sign_off},
-{full_name}"""
+End with this sign-off exactly as written (preserve every line break):
+{signature}"""
 
     return {"prompt": prompt}
 
@@ -297,6 +303,7 @@ def fallback_email(state: EmailState) -> dict:
     university = profile.get("university", "University")
     exp_summary = profile.get("experience_summary", "experienced professional")
     sign_off = profile.get("email_sign_off", "Best")
+    signature = sign_off if full_name in sign_off else f"{sign_off}\n{full_name}"
 
     subject = f"{current_title} @ {current_company} - Opportunities at {company}"
     body = (
@@ -305,7 +312,7 @@ def fallback_email(state: EmailState) -> dict:
         f"as a {current_title} at {current_company}, where {exp_summary}. "
         f"I'm interested in opportunities at {company}.\n\n"
         f"How can I start the interview process?\n\n"
-        f"{sign_off},\n{full_name}"
+        f"{signature}"
     )
 
     if state.get("has_attachments"):

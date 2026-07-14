@@ -167,6 +167,12 @@ export interface AuthStatus {
     is_admin?: boolean;
 }
 
+export interface OnboardingStatus {
+    ready: boolean;
+    missing: string[];
+    message: string;
+}
+
 export interface AdminMetrics {
     total_users: number;
     live_accounts_30d: number;
@@ -231,6 +237,35 @@ export interface EmailLog {
     status: string;
     created_at: string;
     sent_at?: string | null;
+}
+
+export type TemplateKind = "email" | "prompt";
+
+export interface WorkspaceTemplate {
+    id: number;
+    kind: TemplateKind;
+    name: string;
+    subject?: string | null;
+    body: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TemplatePayload {
+    kind: TemplateKind;
+    name: string;
+    subject?: string;
+    body: string;
+}
+
+export interface DraftSyncResponse {
+    drafts: EmailLog[];
+    synced_at: string | null;
+    status: "gmail_checked" | "local_only";
+}
+
+interface TemplateListEnvelope {
+    templates: WorkspaceTemplate[];
 }
 
 export interface UserProfile {
@@ -450,9 +485,11 @@ export async function deleteContact(contactId: string): Promise<{ message: strin
     });
 }
 
-export async function generateDrafts(useLLM: boolean, attachments: File[]): Promise<DraftGenerationResponse> {
+export async function generateDrafts(useLLM: boolean, attachments: File[], options?: { emailTemplateId?: number | null; promptTemplateId?: number | null }): Promise<DraftGenerationResponse> {
     const formData = new FormData();
     formData.append("use_llm", String(useLLM));
+    if (options?.emailTemplateId) formData.append("template_id", String(options.emailTemplateId));
+    if (options?.promptTemplateId) formData.append("prompt_id", String(options.promptTemplateId));
 
     attachments.forEach((file) => {
         formData.append("attachments", file);
@@ -474,8 +511,8 @@ export async function fetchDrafts(): Promise<EmailLog[]> {
     });
 }
 
-export async function syncDrafts(): Promise<EmailLog[]> {
-    return requestJson<EmailLog[]>("/drafts/sync", {
+export async function syncDrafts(): Promise<DraftSyncResponse> {
+    return requestJson<DraftSyncResponse>("/drafts/sync", {
         method: "POST",
         requiresAuth: true,
         json: true,
@@ -542,6 +579,32 @@ export async function fetchProfile(): Promise<UserProfile> {
     }
 
     return normalizeProfile(response);
+}
+
+export async function fetchOnboardingStatus(): Promise<OnboardingStatus> {
+    return requestJson<OnboardingStatus>("/profile/onboarding-status", {
+        requiresAuth: true,
+        json: true,
+        fallbackError: "Failed to check profile readiness",
+    });
+}
+
+export async function fetchTemplates(kind?: TemplateKind): Promise<WorkspaceTemplate[]> {
+    const response = await requestJson<TemplateListEnvelope>(`/templates${kind ? `?kind=${kind}` : ""}`, { requiresAuth: true, json: true, fallbackError: "Failed to fetch templates" });
+    return response.templates;
+}
+
+export async function createTemplate(payload: TemplatePayload): Promise<WorkspaceTemplate> {
+    return requestJson<WorkspaceTemplate>("/templates", { method: "POST", requiresAuth: true, json: true, body: JSON.stringify(payload), fallbackError: "Failed to create template" });
+}
+
+export async function updateTemplate(id: number, payload: TemplatePayload): Promise<WorkspaceTemplate> {
+    const update = { name: payload.name, subject: payload.subject, body: payload.body };
+    return requestJson<WorkspaceTemplate>(`/templates/${id}`, { method: "PUT", requiresAuth: true, json: true, body: JSON.stringify(update), fallbackError: "Failed to update template" });
+}
+
+export async function deleteTemplate(id: number): Promise<{ status: string } | { message: string }> {
+    return requestJson<{ status: string } | { message: string }>(`/templates/${id}`, { method: "DELETE", requiresAuth: true, json: true, fallbackError: "Failed to delete template" });
 }
 
 export async function upsertProfile(profile: Partial<UserProfile>): Promise<UserProfile> {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload, Users, Search, Plus, X, Pencil, Trash2 } from "lucide-react";
-import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Contact, type ManualContactPayload } from "@/services/api";
+import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Contact } from "@/services/api";
 import { IconButton } from "@/components/ui/icon-button";
 import { StatusBanner } from "@/components/ui/status-banner";
 
@@ -16,6 +16,7 @@ export default function ContactsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [addingManual, setAddingManual] = useState(false);
     const [editingContactId, setEditingContactId] = useState<string | null>(null);
+    const dialogRef = useRef<HTMLDivElement>(null);
     const [manualForm, setManualForm] = useState<{ name: string; email: string; company: string; role: string }>({
         name: "",
         email: "",
@@ -26,6 +27,24 @@ export default function ContactsPage() {
     useEffect(() => {
         void loadContacts();
     }, []);
+
+    useEffect(() => {
+        if (!isModalOpen) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        dialogRef.current?.focus();
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsModalOpen(false);
+                resetManualForm();
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [isModalOpen]);
 
     async function loadContacts() {
         try {
@@ -139,10 +158,11 @@ export default function ContactsPage() {
     return (
         <div className="page-container animate-in">
             {/* Header */}
-            <div className="section-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="section-header flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
                 <div>
+                    <p className="coach-kicker">People to reach</p>
                     <h1 className="section-title">Contacts</h1>
-                    <p className="section-description">{contacts.length} prospects in your list</p>
+                    <p className="section-description">{contacts.length} people in your workspace. Keep the list focused enough to write with intent.</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -158,7 +178,7 @@ export default function ContactsPage() {
                     <div className="relative">
                         <input
                             type="file"
-                            accept=".csv, .xlsx, .xls"
+                            accept=".csv,text/csv"
                             onChange={handleFileUpload}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             disabled={uploading}
@@ -169,7 +189,7 @@ export default function ContactsPage() {
                             ) : (
                                 <Upload className="w-4 h-4" />
                             )}
-                            {uploading ? "Uploading..." : "Upload File"}
+                            {uploading ? "Uploading..." : "Upload CSV"}
                         </button>
                     </div>
                 </div>
@@ -185,19 +205,27 @@ export default function ContactsPage() {
             )}
 
             {/* Search */}
-            <div className="mb-6 relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+            <div className="mb-6 max-w-xl">
+                <label htmlFor="contact-search" className="data-line">Find someone in your list</label>
+                <div className="search-field mt-2">
+                <Search aria-hidden="true" />
                 <input
+                    id="contact-search"
                     type="text"
                     placeholder="Search contacts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="input pl-11"
+                    className="input"
                 />
+                </div>
             </div>
 
             {/* Table */}
-            <div className="card overflow-hidden">
+            <div className="workspace-table">
+                <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="data-line">Your contact list</p><p className="mt-1 text-sm text-text-secondary">Every contact here can become a draft when you are ready.</p></div>
+                    <span className="badge badge-default">{filteredContacts.length} shown</span>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="table-header">
@@ -214,13 +242,13 @@ export default function ContactsPage() {
                             {filteredContacts.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-16 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="w-12 h-12 rounded-xl bg-bg-elevated flex items-center justify-center">
-                                                <Users className="w-6 h-6 text-text-muted" />
-                                            </div>
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="workspace-empty-icon">
+                                                    <Users className="w-6 h-6" />
+                                                </div>
                                             <div>
-                                                <p className="font-medium text-text-primary">No contacts found</p>
-                                                <p className="text-sm text-text-muted">Upload a CSV to get started</p>
+                                                <p className="font-semibold text-text-primary">{contacts.length ? "No matches found" : "Start with a small, focused list"}</p>
+                                                <p className="mt-1 text-sm text-text-muted">{contacts.length ? "Try a different name, company, or email." : "Upload a CSV or add one person manually to begin."}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -274,8 +302,9 @@ export default function ContactsPage() {
 
             {/* Add Contact Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
+                <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50 backdrop-blur-sm">
+                    <button type="button" aria-label="Close contact dialog" className="absolute inset-0 cursor-default" onClick={() => { setIsModalOpen(false); resetManualForm(); }} />
+                    <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" className="modal-surface relative w-full max-w-md rounded-xl border border-border bg-bg-elevated p-6 shadow-2xl">
                         <IconButton
                             onClick={() => {
                                 setIsModalOpen(false);
@@ -287,7 +316,7 @@ export default function ContactsPage() {
                             <X className="w-5 h-5" />
                         </IconButton>
                         
-                        <h2 className="text-xl font-bold text-text-primary mb-1">{editingContactId ? "Edit Contact" : "Add Contact"}</h2>
+                        <h2 id="contact-dialog-title" className="text-xl font-bold text-text-primary mb-1">{editingContactId ? "Edit Contact" : "Add Contact"}</h2>
                         <p className="text-sm text-text-muted mb-6">
                             {editingContactId ? "Update this prospect record." : "Manually add a prospect to your list."}
                         </p>

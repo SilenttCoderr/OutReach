@@ -1,5 +1,6 @@
 """Pydantic schemas for the campaigns/drafts/send API surface."""
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
@@ -52,3 +53,25 @@ class SendAllDraftsResponse(BaseModel):
 class ClearTrackingResponse(BaseModel):
     status: str
     email_logs_removed: int
+
+
+class DraftLogRead(BaseModel):
+    id: int
+    recipient_email: str
+    recipient_name: Optional[str] = None
+    company: Optional[str] = None
+    subject: Optional[str] = None
+    body: Optional[str] = None
+    status: str
+    created_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    gmail_draft_id: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DraftSyncResponse(BaseModel):
+    drafts: List[DraftLogRead]
+    synced_at: Optional[str] = None
+    status: str

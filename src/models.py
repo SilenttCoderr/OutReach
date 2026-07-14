@@ -29,10 +29,12 @@ class User(Base):
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    templates_seeded_at = Column(DateTime, nullable=True)
     
     # Relationships
     email_logs = relationship("EmailLog", back_populates="user", cascade="all, delete-orphan")
     contacts = relationship("Contact", back_populates="user", cascade="all, delete-orphan")
+    templates = relationship("Template", back_populates="user", cascade="all, delete-orphan")
 
 
 class Contact(Base):
@@ -107,7 +109,7 @@ class UserProfile(Base):
     key_skills = Column(JsonListType, nullable=True)
     highlights = Column(JsonListType, nullable=True)
     preferred_roles = Column(JsonListType, nullable=True)
-    email_sign_off = Column(String(100), default="Best")
+    email_sign_off = Column(Text, default="Best")
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -134,3 +136,22 @@ class UserProfile(Base):
             "preferred_roles": self.preferred_roles or [],
             "email_sign_off": self.email_sign_off or "Best",
         }
+
+
+class Template(Base):
+    """User-owned email or prompt template."""
+
+    __tablename__ = "templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+
+    kind = Column(String(20), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    subject = Column(Text, nullable=True)
+    body = Column(Text, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="templates")

@@ -14,10 +14,11 @@ import {
     Sparkles,
     Clock
 } from "lucide-react";
-import { fetchStats, type Stats } from "@/services/api";
+import { checkAuthStatus, fetchContacts, fetchOnboardingStatus, fetchStats, type Stats } from "@/services/api";
 import { useSafeTimeout } from "@/lib/timeout";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBanner } from "@/components/ui/status-banner";
+import { OnboardingGuide } from "@/components/dashboard/onboarding-guide";
 
 export default function DashboardPage() {
     return (
@@ -35,6 +36,7 @@ function DashboardContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [stats, setStats] = useState<Stats | null>(null);
+    const [onboarding, setOnboarding] = useState({ profileReady: false, gmailConnected: false, hasContacts: false, hasDrafts: false, hasSentMessage: false });
     const [loading, setLoading] = useState(true);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info" | "success"; message: string } | null>(null);
@@ -50,8 +52,33 @@ function DashboardContent() {
         async function loadData() {
             try {
                 setStatusMessage(null);
-                const statsData = await fetchStats();
+                const [statsResult, profileResult, authResult, contactsResult] = await Promise.allSettled([
+                    fetchStats(),
+                    fetchOnboardingStatus(),
+                    checkAuthStatus(),
+                    fetchContacts(),
+                ]);
+
+                if (statsResult.status !== "fulfilled") {
+                    throw statsResult.reason;
+                }
+
+                const statsData = statsResult.value;
                 setStats(statsData);
+                setOnboarding({
+                    profileReady: profileResult.status === "fulfilled" && profileResult.value.ready,
+                    gmailConnected: authResult.status === "fulfilled" && Boolean(authResult.value.gmail_connected),
+                    hasContacts: contactsResult.status === "fulfilled" && contactsResult.value.length > 0,
+                    hasDrafts: statsData.total_drafted + statsData.total_sent > 0,
+                    hasSentMessage: statsData.total_sent > 0,
+                });
+
+                if ([profileResult, authResult, contactsResult].some((result) => result.status === "rejected")) {
+                    setStatusMessage({
+                        type: "info",
+                        message: "Some setup progress could not be loaded. Your workspace actions are still available.",
+                    });
+                }
             } catch {
                 setStatusMessage({
                     type: "error",
@@ -62,7 +89,7 @@ function DashboardContent() {
             }
         }
         void loadData();
-    }, [searchParams]);
+    }, [safeTimeout, searchParams]);
 
     const handleBuyCredits = () => {
         router.push("/pricing");
@@ -126,8 +153,9 @@ function DashboardContent() {
             {/* Header */}
             <div className="section-header flex items-center justify-between">
                 <div>
-                    <h1 className="section-title">Dashboard</h1>
-                    <p className="section-description">Overview of your outreach performance</p>
+                    <p className="coach-kicker">Your workspace</p>
+                    <h1 className="section-title mt-3">A calmer way to make your next move.</h1>
+                    <p className="section-description">Your context, contacts, and drafts are all moving in the same direction.</p>
                 </div>
                 <button onClick={handleBuyCredits} className="btn-primary">
                     <Plus className="w-4 h-4" /> Add Credits
@@ -165,6 +193,18 @@ function DashboardContent() {
                 />
             </div>
 
+            <div className="grid gap-5 xl:grid-cols-[1.1fr_.9fr] mb-8">
+                <OnboardingGuide {...onboarding} />
+                <div className="coach-panel p-6 flex flex-col justify-between">
+                    <div>
+                        <p className="coach-kicker">A gentle prompt</p>
+                        <h2 className="mt-3 text-xl font-bold tracking-tight text-text-primary">The best messages begin with a little more context.</h2>
+                        <p className="mt-2 text-sm leading-6 text-text-secondary">Start by importing the people you want to reach. Then use a campaign to shape drafts you can make your own.</p>
+                    </div>
+                    <Link href="/dashboard/contacts" className="btn-secondary mt-6 self-start text-sm">Import a contact list <ArrowRight className="w-4 h-4" /></Link>
+                </div>
+            </div>
+
             {/* Quick Actions */}
             <div className="grid md:grid-cols-2 gap-4 mb-8">
                 <ActionCard
@@ -184,24 +224,11 @@ function DashboardContent() {
                 />
             </div>
 
-            {/* Recent Activity */}
-            <div className="card p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">Recent Activity</h2>
-                    <Link href="/dashboard/drafts" className="text-sm text-accent hover:underline flex items-center gap-1">
-                        View all <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-                <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-lg bg-bg-base/50">
-                    <div className="w-12 h-12 rounded-full bg-bg-elevated flex items-center justify-center mb-4">
-                        <Upload className="w-6 h-6 text-text-muted" />
-                    </div>
-                    <h3 className="text-text-primary font-medium mb-1">No recent activity</h3>
-                    <p className="text-text-muted text-sm mb-4">Start your cold outreach by importing your contact list.</p>
-                    <Link href="/dashboard/contacts" className="btn-primary text-sm">
-                        Import Contacts
-                    </Link>
-                </div>
+            <div className="coach-panel p-6">
+                <p className="coach-kicker">Keep it thoughtful</p>
+                <h2 className="mt-3 text-lg font-bold text-text-primary">Review drafts before every send.</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">OutreachPro creates drafts for you to evaluate. Nothing is sent until you choose to send it from the Drafts workspace.</p>
+                <Link href="/dashboard/drafts" className="btn-secondary mt-5 text-sm">Open drafts <ArrowRight className="w-4 h-4" /></Link>
             </div>
         </div>
     );
