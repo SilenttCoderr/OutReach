@@ -1,6 +1,8 @@
 """Authentication API routes."""
 
+import logging
 import os
+from urllib.parse import urlencode
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, HTTPException, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -32,6 +34,7 @@ from src.schemas.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+logger = logging.getLogger(__name__)
 
 # Frontend URL for redirects
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -197,12 +200,14 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         
         # Redirect to frontend with token
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/auth/callback?token={access_token}"
+            url=f"{FRONTEND_URL}/auth/callback?{urlencode({'token': access_token})}"
         )
-    except Exception as e:
-        # Redirect to login with error
+    except Exception:
+        # Do not interpolate raw provider errors into a URL. Besides exposing
+        # internals, percent characters can make Next's query parser throw.
+        logger.exception("Google OAuth callback failed")
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/login?error={str(e)}"
+            url=f"{FRONTEND_URL}/login?{urlencode({'error': 'Google sign-in failed. Please try again.'})}"
         )
 
 
