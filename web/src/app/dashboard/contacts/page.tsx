@@ -165,7 +165,7 @@ export default function ContactsPage() {
                     <p className="section-description">{contacts.length} people in your workspace. Keep the list focused enough to write with intent.</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <button 
                         onClick={openAddModal}
                         className="btn-secondary"
@@ -175,23 +175,22 @@ export default function ContactsPage() {
                         Add Manually
                     </button>
                     
-                    <div className="relative">
+                    <label className={`btn-primary upload-action ${uploading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                         <input
                             type="file"
                             accept=".csv,text/csv"
                             onChange={handleFileUpload}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            className="sr-only"
+                            aria-label="Upload contacts CSV"
                             disabled={uploading}
                         />
-                        <button className={`btn-primary ${uploading ? 'opacity-50' : ''}`}>
-                            {uploading ? (
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <Upload className="w-4 h-4" />
-                            )}
-                            {uploading ? "Uploading..." : "Upload CSV"}
-                        </button>
-                    </div>
+                        {uploading ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <Upload className="w-4 h-4" />
+                        )}
+                        {uploading ? "Uploading..." : "Upload CSV"}
+                    </label>
                 </div>
             </div>
 
@@ -227,7 +226,7 @@ export default function ContactsPage() {
                     <span className="badge badge-default">{filteredContacts.length} shown</span>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full min-w-[58rem] table-fixed text-sm">
                         <thead className="table-header">
                             <tr>
                                 <th className="px-6 py-3 text-left">Name</th>
@@ -257,16 +256,16 @@ export default function ContactsPage() {
                                 filteredContacts.map((contact) => (
                                     <tr key={contact.id || contact.email} className="table-row">
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex min-w-0 items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium text-accent">
                                                     {contact.name?.split(' ').map(n => n[0]).join('') || '?'}
                                                 </div>
-                                                <span className="font-medium text-text-primary">{contact.name || "-"}</span>
+                                                <span className="break-words font-medium text-text-primary">{contact.name || "-"}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-text-secondary">{contact.email || "-"}</td>
-                                        <td className="px-6 py-4 text-text-primary">{contact.company || "-"}</td>
-                                        <td className="px-6 py-4 text-text-secondary">{contact.role || "-"}</td>
+                                        <td className="break-words px-6 py-4 text-text-secondary">{contact.email || "-"}</td>
+                                        <td className="break-words px-6 py-4 text-text-primary">{contact.company || "-"}</td>
+                                        <td className="break-words px-6 py-4 text-text-secondary">{contact.role || "-"}</td>
                                         <td className="px-6 py-4">
                                             <span className={
                                                 contact.status === 'sent' ? 'badge badge-success' :

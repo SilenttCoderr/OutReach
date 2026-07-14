@@ -12,12 +12,12 @@ export default function DashboardLayout({
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
     return (
-        <div className="flex min-h-screen bg-bg-base overflow-hidden">
+        <div className="flex h-dvh min-h-0 bg-bg-base overflow-hidden">
             <Sidebar mobileOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-            <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 <Header onOpenMenu={() => setMobileNavOpen(true)} />
                 <main
-                    className="flex-1 overflow-y-auto overflow-x-hidden"
+                    className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
                     onClick={() => {
                         if (mobileNavOpen) {
                             setMobileNavOpen(false);
