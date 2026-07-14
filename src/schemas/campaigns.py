@@ -53,6 +53,7 @@ class SendAllDraftsResponse(BaseModel):
 class ClearTrackingResponse(BaseModel):
     status: str
     email_logs_removed: int
+    contacts_reset: int
 
 
 class DraftLogRead(BaseModel):

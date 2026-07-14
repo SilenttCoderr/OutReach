@@ -51,6 +51,10 @@ web/.DS_Store
 # IDE
 .vscode/
 .idea/
+.agent/
+.planning/
+.serena/
+.cursor/
 
 # Logs
 logs/
@@ -62,6 +66,10 @@ yarn-error.log*
 # Runtime artifacts
 uploads/
 cold_outreach.db
+data/
+profile.json
+temp*.txt
+test_contacts.csv
 
 # Secrets
 token.json

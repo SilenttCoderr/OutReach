@@ -114,9 +114,9 @@ class TestContactsEndpoint:
         # Assert
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        assert len(data) == 1
-        assert data[0]["name"] == "John Doe"
+        assert isinstance(data["contacts"], list)
+        assert len(data["contacts"]) == 1
+        assert data["contacts"][0]["name"] == "John Doe"
     
     def test_contacts_filters_by_status(self, client, mock_db):
         """Should filter contacts by status when provided."""
