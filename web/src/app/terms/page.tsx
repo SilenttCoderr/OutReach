@@ -9,11 +9,12 @@ export default function TermsPage() {
         <div className="min-h-screen bg-bg-base">
             <MarketingHeader activePath="/terms" showFeaturesLink={false} />
 
-            <main className="max-w-3xl mx-auto px-6 py-24">
-                <h1 className="text-3xl font-bold text-text-primary mb-2">Terms of Service</h1>
+            <main className="max-w-3xl mx-auto px-5 py-28 sm:px-8">
+                <p className="coach-kicker">Legal</p>
+                <h1 className="section-title mt-3 mb-2">Terms of Service</h1>
                 <p className="text-text-muted text-sm mb-10">Last updated: January 2026</p>
 
-                <div className="space-y-8 text-text-secondary">
+                <div className="coach-panel p-6 sm:p-8 space-y-8 text-text-secondary">
                     <section>
                         <h2 className="text-lg font-semibold text-text-primary mb-3">1. Acceptance</h2>
                         <p className="text-sm leading-relaxed">
