@@ -34,7 +34,7 @@ function formatDate(value?: string | null): string {
 
 export default function AdminPage() {
     const [loading, setLoading] = useState(true);
-    const [forbidden, setForbidden] = useState(false);
+    const [forbidden] = useState(false);
     const [overview, setOverview] = useState<AdminOverview>(EMPTY_OVERVIEW);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);

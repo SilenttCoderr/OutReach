@@ -167,6 +167,12 @@ export interface AuthStatus {
     is_admin?: boolean;
 }
 
+export interface OnboardingStatus {
+    ready: boolean;
+    missing: string[];
+    message: string;
+}
+
 export interface AdminMetrics {
     total_users: number;
     live_accounts_30d: number;
@@ -542,6 +548,14 @@ export async function fetchProfile(): Promise<UserProfile> {
     }
 
     return normalizeProfile(response);
+}
+
+export async function fetchOnboardingStatus(): Promise<OnboardingStatus> {
+    return requestJson<OnboardingStatus>("/profile/onboarding-status", {
+        requiresAuth: true,
+        json: true,
+        fallbackError: "Failed to check profile readiness",
+    });
 }
 
 export async function upsertProfile(profile: Partial<UserProfile>): Promise<UserProfile> {

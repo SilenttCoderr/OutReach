@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Upload, Users, Search, Plus, X, Pencil, Trash2 } from "lucide-react";
-import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Contact, type ManualContactPayload } from "@/services/api";
+import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Contact } from "@/services/api";
 import { IconButton } from "@/components/ui/icon-button";
 import { StatusBanner } from "@/components/ui/status-banner";
 
@@ -158,7 +158,7 @@ export default function ContactsPage() {
                     <div className="relative">
                         <input
                             type="file"
-                            accept=".csv, .xlsx, .xls"
+                            accept=".csv,text/csv"
                             onChange={handleFileUpload}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             disabled={uploading}
@@ -169,7 +169,7 @@ export default function ContactsPage() {
                             ) : (
                                 <Upload className="w-4 h-4" />
                             )}
-                            {uploading ? "Uploading..." : "Upload File"}
+                            {uploading ? "Uploading..." : "Upload CSV"}
                         </button>
                     </div>
                 </div>
@@ -275,7 +275,7 @@ export default function ContactsPage() {
             {/* Add Contact Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
+                    <div role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
                         <IconButton
                             onClick={() => {
                                 setIsModalOpen(false);
@@ -287,7 +287,7 @@ export default function ContactsPage() {
                             <X className="w-5 h-5" />
                         </IconButton>
                         
-                        <h2 className="text-xl font-bold text-text-primary mb-1">{editingContactId ? "Edit Contact" : "Add Contact"}</h2>
+                        <h2 id="contact-dialog-title" className="text-xl font-bold text-text-primary mb-1">{editingContactId ? "Edit Contact" : "Add Contact"}</h2>
                         <p className="text-sm text-text-muted mb-6">
                             {editingContactId ? "Update this prospect record." : "Manually add a prospect to your list."}
                         </p>

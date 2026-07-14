@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, CreditCard, Bell, Shield } from "lucide-react";
+import { User, CreditCard, Shield } from "lucide-react";
 import { ConfirmActionDialog } from "@/components/ui/confirm-action-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,7 @@ export default function SettingsPage() {
         setShowDeleteConfirm(false);
         setStatusMessage({
             type: "info",
-            message: "Delete account is not enabled yet. Please contact support to remove your account.",
+            message: "Self-service deletion is not enabled. Please contact support to request account removal; nothing was deleted here.",
         });
     };
 
@@ -25,28 +25,17 @@ export default function SettingsPage() {
         {
             icon: User,
             title: "Account",
-            description: "Manage your account details",
+            description: "The details currently associated with your workspace",
             items: [
                 { label: "Email", value: userEmail || "-" },
-                { label: "Plan", value: "Free" },
             ]
         },
         {
             icon: CreditCard,
             title: "Credits & Billing",
-            description: "Manage credits and payments",
+            description: "Credits are used when you generate outreach drafts",
             items: [
                 { label: "Available Credits", value: credits.toString() },
-                { label: "Payment Method", value: "Stripe" },
-            ]
-        },
-        {
-            icon: Bell,
-            title: "Notifications",
-            description: "Configure notifications",
-            items: [
-                { label: "Email Notifications", value: "Enabled" },
-                { label: "Weekly Reports", value: "Disabled" },
             ]
         },
     ];
@@ -101,22 +90,22 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-error">Danger Zone</h3>
-                                <p className="text-sm text-text-secondary">Irreversible actions</p>
+                                <p className="text-sm text-text-secondary">Account removal is handled by support while self-service deletion is unavailable.</p>
                             </div>
                         </div>
 
                         <div className="border-t border-border pt-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-text-primary">Delete Account</p>
-                                    <p className="text-xs text-text-muted">Permanently delete your data</p>
+                                    <p className="text-sm font-medium text-text-primary">Request account removal</p>
+                                    <p className="text-xs text-text-muted">We&apos;ll explain the next step without removing anything from this screen.</p>
                                 </div>
                                 <button
                                     type="button"
                                     className="btn-ghost text-error border-error/30 hover:bg-error/10 text-sm"
                                     onClick={() => setShowDeleteConfirm(true)}
                                 >
-                                    Delete
+                                    Request removal
                                 </button>
                             </div>
                         </div>
@@ -125,9 +114,9 @@ export default function SettingsPage() {
 
                 <ConfirmActionDialog
                     open={showDeleteConfirm}
-                    title="Delete account"
-                    description="This action is irreversible. Are you sure you want to continue?"
-                    confirmLabel="Delete account"
+                    title="Request account removal"
+                    description="Self-service deletion is not available yet. Confirm to see how to request removal from support."
+                    confirmLabel="Continue"
                     onCancel={() => setShowDeleteConfirm(false)}
                     onConfirm={handleConfirmDelete}
                 />

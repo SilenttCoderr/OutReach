@@ -57,7 +57,7 @@ export default function CampaignsPage() {
                 {/* Header */}
                 <div className="section-header">
                     <h1 className="section-title">New Campaign</h1>
-                    <p className="section-description">Configure AI settings and generate drafts</p>
+                    <p className="section-description">Create personal drafts you can review before anything is sent</p>
                 </div>
 
                 <div className="space-y-6">
@@ -107,9 +107,9 @@ export default function CampaignsPage() {
                                     <Sparkles className="w-5 h-5 text-accent" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-text-primary">AI Personalization</h3>
+                                    <h3 className="font-semibold text-text-primary">Personalized draft generation</h3>
                                     <p className="text-sm text-text-secondary mt-0.5">
-                                        Use Gemini to write unique emails for each contact
+                                        Use your profile and each contact&apos;s context to shape a distinct starting draft.
                                     </p>
                                 </div>
                             </div>
@@ -117,7 +117,7 @@ export default function CampaignsPage() {
                             <SwitchField
                                 checked={useLLM}
                                 onCheckedChange={setUseLLM}
-                                label="AI personalization"
+                                label="Personalized drafts"
                             />
                         </div>
                     </div>
