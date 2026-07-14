@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { fetchProfile, upsertProfile, type UserProfile } from "@/services/api";
-import { Save, Plus, X, UserCircle } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, GraduationCap, MessageSquareText, Save, Plus, Sparkles, UserCircle, X } from "lucide-react";
 import { StatusBanner } from "@/components/ui/status-banner";
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -150,14 +151,19 @@ export default function ProfilePage() {
 
     return (
         <div className="page-container animate-in">
-            <div className="section-header">
-                <h1 className="section-title">Your Profile</h1>
+            <div className="section-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                <p className="coach-kicker">Your foundation</p>
+                <h1 className="section-title mt-3">Make every draft sound more like you.</h1>
                 <p className="section-description">
                     Configure your personal details used to tailor generated emails to your experience and voice.
                 </p>
+                </div>
+                {viewMode && hasSavedData && <button type="button" onClick={() => setViewMode(false)} className="btn-secondary text-sm">Refine profile</button>}
             </div>
 
-            <div className="max-w-3xl">
+            <div className="workspace-layout with-rail">
+                <div className="min-w-0">
                 {error && (
                     <StatusBanner type="error" message={error} className="mb-6" />
                 )}
@@ -167,7 +173,7 @@ export default function ProfilePage() {
                 )}
 
                 {viewMode && hasSavedData && (
-                    <div className="card p-6 space-y-6 mb-6">
+                    <div className="coach-panel p-5 sm:p-7 space-y-6 mb-6">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div>
                                 <h2 className="text-xl font-semibold text-text-primary">{profile.full_name || "Profile"}</h2>
@@ -175,13 +181,7 @@ export default function ProfilePage() {
                                     {[profile.current_title, profile.current_company].filter(Boolean).join(" at ") || "No title/company added yet"}
                                 </p>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode(false)}
-                                className="btn-secondary"
-                            >
-                                Edit Profile
-                            </button>
+                            <span className="badge badge-success">Ready for drafts</span>
                         </div>
 
                         <div>
@@ -198,7 +198,7 @@ export default function ProfilePage() {
                             </p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-6 border-t border-border pt-6 md:grid-cols-2">
                             <div>
                                 <h3 className="text-sm font-semibold text-text-primary mb-2">Core Skills</h3>
                                 <ul className="flex flex-wrap gap-2">
@@ -239,18 +239,16 @@ export default function ProfilePage() {
                 )}
 
                 {(!viewMode || !hasSavedData) && (
-                    <div className="card">
-                        <form onSubmit={handleSubmit} className="p-6 space-y-8">
+                    <div className="coach-panel">
+                        <form onSubmit={handleSubmit} className="p-5 space-y-8 sm:p-7">
                         
                         {/* Basic Information */}
-                        <div>
-                            <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                                <UserCircle className="w-5 h-5 text-accent" />
-                                Basic Details
-                            </h2>
+                        <div className="workspace-section">
+                            <h2 className="workspace-section-title flex items-center gap-2"><UserCircle className="w-5 h-5 text-accent" /> The details people should recognize</h2>
+                            <p className="workspace-section-copy mb-5">These details set the voice and signature used throughout your outreach.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">Full Name</label>
+                                <div className="field-stack">
+                                    <label className="field-label">Full Name</label>
                                     <input
                                         type="text"
                                         required
@@ -260,8 +258,8 @@ export default function ProfilePage() {
                                         placeholder="e.g. John Doe"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">Email Sign-off</label>
+                                <div className="field-stack">
+                                    <label className="field-label">Email Sign-off</label>
                                     <input
                                         type="text"
                                         required
@@ -271,8 +269,8 @@ export default function ProfilePage() {
                                         placeholder="e.g. Best regards,"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">Current Title</label>
+                                <div className="field-stack">
+                                    <label className="field-label">Current Title</label>
                                     <input
                                         type="text"
                                         required
@@ -282,8 +280,8 @@ export default function ProfilePage() {
                                         placeholder="e.g. Software Engineer"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">Current Company</label>
+                                <div className="field-stack">
+                                    <label className="field-label">Current Company</label>
                                     <input
                                         type="text"
                                         className="input-field"
@@ -295,14 +293,15 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        <hr className="border-border" />
+                        <hr className="surface-divider" />
 
                         {/* Education */}
-                        <div>
-                            <h2 className="text-lg font-semibold text-text-primary mb-4">Education</h2>
+                        <div className="workspace-section">
+                            <h2 className="workspace-section-title flex items-center gap-2"><GraduationCap className="w-5 h-5 text-accent" /> Education that adds context</h2>
+                            <p className="workspace-section-copy mb-5">Include the background that is relevant to the people you want to reach.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">Degree / Major</label>
+                                <div className="field-stack">
+                                    <label className="field-label">Degree / Major</label>
                                     <input
                                         type="text"
                                         required
@@ -312,8 +311,8 @@ export default function ProfilePage() {
                                         placeholder="e.g. B.S. in Computer Science"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">University</label>
+                                <div className="field-stack">
+                                    <label className="field-label">University</label>
                                     <input
                                         type="text"
                                         required
@@ -326,15 +325,16 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        <hr className="border-border" />
+                        <hr className="surface-divider" />
 
                         {/* Experience & Summary */}
-                        <div>
-                            <h2 className="text-lg font-semibold text-text-primary mb-4">Experience Narrative</h2>
+                        <div className="workspace-section">
+                            <h2 className="workspace-section-title flex items-center gap-2"><BriefcaseBusiness className="w-5 h-5 text-accent" /> The story behind your work</h2>
+                            <p className="workspace-section-copy mb-5">Give the draft generator the real details it needs to make an informed introduction.</p>
                             <div className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-text-secondary">Experience Summary</label>
-                                    <p className="text-xs text-text-muted mb-2">A 1-2 sentence elevator pitch of your experience used in the emails.</p>
+                                <div className="field-stack">
+                                    <label className="field-label">Experience Summary</label>
+                                    <p className="field-help">A one- or two-sentence introduction that appears in your outreach.</p>
                                     <textarea
                                         required
                                         className="input-field min-h-28 resize-y leading-relaxed"
@@ -346,9 +346,9 @@ export default function ProfilePage() {
                                 
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-sm font-medium text-text-secondary">Key Highlights</label>
+                                        <label className="field-label">Key Highlights</label>
                                     </div>
-                                    <p className="text-xs text-text-muted">Specific impressive metrics, built systems, or achievements for the AI to dynamically adapt to the recruiter company profile.</p>
+                                    <p className="field-help">Add specific outcomes, projects, or milestones that make your experience memorable.</p>
                                     {profile.highlights.map((highlight, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                             <input
@@ -361,7 +361,7 @@ export default function ProfilePage() {
                                             <button 
                                                 type="button" 
                                                 onClick={() => removeArrayItem('highlights', index)}
-                                                className="p-2 text-text-muted hover:text-error transition-colors"
+                                                className="rounded-lg p-2 text-text-muted hover:bg-error/10 hover:text-error transition-colors"
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
@@ -370,7 +370,7 @@ export default function ProfilePage() {
                                     <button 
                                         type="button"
                                         onClick={() => addArrayItem('highlights')}
-                                        className="text-sm text-accent hover:underline flex items-center gap-1 mt-2"
+                                        className="action-link mt-2"
                                     >
                                         <Plus className="w-4 h-4" /> Add Highlight
                                     </button>
@@ -378,7 +378,7 @@ export default function ProfilePage() {
 
                                 <div className="space-y-2 pt-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-sm font-medium text-text-secondary">Core Skills</label>
+                                        <label className="field-label">Core Skills</label>
                                     </div>
                                     {profile.key_skills.map((skill, index) => (
                                         <div key={index} className="flex items-center gap-2">
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                                             <button 
                                                 type="button" 
                                                 onClick={() => removeArrayItem('key_skills', index)}
-                                                className="p-2 text-text-muted hover:text-error transition-colors"
+                                                className="rounded-lg p-2 text-text-muted hover:bg-error/10 hover:text-error transition-colors"
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
@@ -401,7 +401,7 @@ export default function ProfilePage() {
                                     <button 
                                         type="button"
                                         onClick={() => addArrayItem('key_skills')}
-                                        className="text-sm text-accent hover:underline flex items-center gap-1 mt-2"
+                                        className="action-link mt-2"
                                     >
                                         <Plus className="w-4 h-4" /> Add Skill
                                     </button>
@@ -410,7 +410,7 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Submit */}
-                        <div className="pt-4 flex items-center justify-end gap-3 border-t border-border">
+                        <div className="pt-5 flex items-center justify-end gap-3 border-t border-border">
                             {hasSavedData && (
                                 <button
                                     type="button"
@@ -440,6 +440,14 @@ export default function ProfilePage() {
                     </form>
                     </div>
                 )}
+                </div>
+                <aside className="workspace-rail">
+                    <p className="data-line">Why this matters</p>
+                    <div className="mt-4 space-y-5 text-sm">
+                        <div><Sparkles className="h-5 w-5 text-accent" /><p className="mt-3 font-semibold text-text-primary">Better context, better first drafts</p><p className="mt-1 leading-6 text-text-secondary">Your profile is used to give every draft a clear point of view.</p></div>
+                        <div className="border-t border-border pt-4"><MessageSquareText className="h-5 w-5 text-accent" /><p className="mt-3 font-semibold text-text-primary">You still have the final word</p><p className="mt-1 leading-6 text-text-secondary">Every generated message stays editable in Drafts before it is sent.</p><Link href="/dashboard/drafts" className="action-link mt-2">Open review desk <ArrowRight className="h-4 w-4" /></Link></div>
+                    </div>
+                </aside>
             </div>
         </div>
     );

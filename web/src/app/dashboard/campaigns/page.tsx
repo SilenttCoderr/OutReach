@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, FileText, Send, CheckCircle, Loader2, Upload, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
-import { generateDrafts, getGoogleAuthUrl, DraftGenerationProgress, DraftGenerationResponse } from "@/services/api";
-import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { useState } from "react";
+import { AlertTriangle, ArrowRight, CheckCircle, ExternalLink, FileText, Loader2, Sparkles, Upload } from "lucide-react";
+import { generateDrafts, getGoogleAuthUrl, type DraftGenerationProgress, type DraftGenerationResponse } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
+import { StatusBanner } from "@/components/ui/status-banner";
 import { SwitchField } from "@/components/ui/switch-field";
 
 export default function CampaignsPage() {
@@ -13,20 +14,17 @@ export default function CampaignsPage() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<DraftGenerationResponse | null>(null);
     const [progress, setProgress] = useState<DraftGenerationProgress[]>([]);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const { status: authStatus } = useAuth();
     const gmailConnected = authStatus ? Boolean(authStatus.gmail_connected) : null;
-    const googleAuthUrl = getGoogleAuthUrl();
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            setAttachments(Array.from(e.target.files));
-        }
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) setAttachments(Array.from(event.target.files));
     };
 
     const handleGenerate = async () => {
         if (gmailConnected !== true) {
-            setMessage({ type: 'error', text: 'Please connect your Gmail account first by logging in with Google.' });
+            setMessage({ type: "error", text: "Connect Gmail before generating drafts." });
             return;
         }
         setLoading(true);
@@ -37,204 +35,84 @@ export default function CampaignsPage() {
             const data = await generateDrafts(useLLM, attachments);
             setResult(data);
             setProgress(data.progress || []);
-            if (data.success > 0) {
-                setMessage({ type: 'success', text: `Created ${data.success} draft(s) in your Gmail!` });
-            } else if (data.failed > 0) {
-                const firstError = data.errors?.[0]?.errors?.[0] || 'Check your profile and contacts.';
-                setMessage({ type: 'error', text: `${data.failed} draft(s) failed: ${firstError}` });
+            if (data.success > 0) setMessage({ type: "success", text: `Created ${data.success} draft${data.success === 1 ? "" : "s"}. Review them before sending.` });
+            if (data.failed > 0) {
+                const firstError = data.errors?.[0]?.errors?.[0] || "Check your profile and contacts.";
+                setMessage({ type: "error", text: `${data.failed} draft${data.failed === 1 ? "" : "s"} could not be created: ${firstError}` });
             }
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "Failed to generate drafts. Please try again.";
-            setMessage({ type: 'error', text: message });
+            setMessage({ type: "error", text: error instanceof Error ? error.message : "Failed to generate drafts. Please try again." });
         } finally {
             setLoading(false);
         }
     };
 
+    const completeCount = progress.filter((item) => item.status === "success").length;
+
     return (
         <div className="page-container animate-in">
-            <div className="max-w-2xl mx-auto">
-                {/* Header */}
-                <div className="section-header">
-                    <h1 className="section-title">New Campaign</h1>
-                    <p className="section-description">Create personal drafts you can review before anything is sent</p>
+            <div className="section-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-2xl">
+                    <p className="coach-kicker">Draft studio</p>
+                    <h1 className="section-title mt-3">Shape a thoughtful first pass.</h1>
+                    <p className="section-description">OutreachPro turns the context you provide into drafts. You remain in control of every message before it is sent.</p>
                 </div>
+                <Link href="/dashboard/drafts" className="action-link">Review existing drafts <ArrowRight className="h-4 w-4" /></Link>
+            </div>
 
-                <div className="space-y-6">
-                    {/* Gmail Connection Warning */}
-                    {gmailConnected === false && (
-                        <div className="card p-5 bg-warning/5 border border-warning/30 flex items-start gap-4">
-                            <div className="p-2 rounded-lg bg-warning/20 shrink-0">
-                                <AlertTriangle className="w-5 h-5 text-warning" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-text-primary mb-1">Gmail Not Connected</h3>
-                                <p className="text-sm text-text-secondary mb-3">
-                                    Emails are sent <strong>from your own Gmail account</strong>. You must sign in with Google to grant Gmail access. Email/password accounts cannot send emails.
-                                </p>
-                                <a
-                                    href={googleAuthUrl}
-                                    className="btn-primary text-sm inline-flex items-center gap-2"
-                                >
-                                    <ExternalLink className="w-4 h-4" />
-                                    Connect Gmail via Google
-                                </a>
-                            </div>
-                        </div>
-                    )}
+            {message && <StatusBanner type={message.type} message={message.text} className="mb-6" />}
 
-                    {/* Message Banner */}
-                    {message && (
-                        <div className={`p-4 rounded-lg flex items-start gap-3 ${message.type === 'success'
-                            ? 'bg-success/10 border border-success/30'
-                            : 'bg-error/10 border border-error/30'
-                        }`}>
-                            {message.type === 'success'
-                                ? <CheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                                : <AlertTriangle className="w-5 h-5 text-error shrink-0 mt-0.5" />
-                            }
-                            <span className={`text-sm ${message.type === 'success' ? 'text-success' : 'text-error'}`}>
-                                {message.text}
-                            </span>
-                        </div>
-                    )}
+            {gmailConnected === false && (
+                <section className="mb-6 flex gap-4 rounded-[var(--radius-xl)] border border-warning/35 bg-warning-muted p-5">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-warning/15 text-warning"><AlertTriangle className="h-5 w-5" /></div>
+                    <div className="min-w-0">
+                        <h2 className="font-bold text-text-primary">Connect the Gmail account you will send from</h2>
+                        <p className="mt-1 max-w-2xl text-sm leading-6 text-text-secondary">Draft generation and delivery use your own Gmail account. Sign in with Google to grant that connection.</p>
+                        <a href={getGoogleAuthUrl()} className="btn-primary mt-4 text-sm"><ExternalLink className="h-4 w-4" /> Connect Gmail via Google</a>
+                    </div>
+                </section>
+            )}
 
-                    {/* AI Toggle */}
-                    <div className="card p-6">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-4">
-                                <div className="p-2.5 rounded-lg bg-accent/20">
-                                    <Sparkles className="w-5 h-5 text-accent" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-text-primary">Personalized draft generation</h3>
-                                    <p className="text-sm text-text-secondary mt-0.5">
-                                        Use your profile and each contact&apos;s context to shape a distinct starting draft.
-                                    </p>
-                                </div>
-                            </div>
+            <div className="workspace-layout with-rail">
+                <section className="coach-panel p-5 sm:p-7">
+                    <div className="workflow-step">
+                        <span className="workflow-marker">01</span>
+                        <div className="flex-1"><h2 className="workspace-section-title">Decide how much guidance to use</h2><p className="workspace-section-copy">Keep personalization on to use your profile and contact context as the starting point for each draft.</p></div>
+                        <SwitchField checked={useLLM} onCheckedChange={setUseLLM} label="Personalized drafts" />
+                    </div>
 
-                            <SwitchField
-                                checked={useLLM}
-                                onCheckedChange={setUseLLM}
-                                label="Personalized drafts"
-                            />
+                    <div className="workflow-step">
+                        <span className="workflow-marker">02</span>
+                        <div className="min-w-0 flex-1">
+                            <h2 className="workspace-section-title">Add optional supporting material</h2>
+                            <p className="workspace-section-copy">A resume or case study can give your drafts useful specificity.</p>
+                            <label className={`mt-4 flex cursor-pointer items-center gap-4 rounded-xl border border-dashed p-4 transition ${attachments.length ? "border-accent bg-accent/5" : "border-border-strong bg-bg-surface hover:border-accent"}`}>
+                                <input type="file" multiple onChange={handleFileChange} className="sr-only" />
+                                <span className="grid h-10 w-10 place-items-center rounded-xl bg-bg-elevated text-accent"><Upload className="h-5 w-5" /></span>
+                                <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-text-primary">{attachments.length ? `${attachments.length} file${attachments.length === 1 ? "" : "s"} ready` : "Choose supporting files"}</span><span className="mt-0.5 block truncate text-xs text-text-muted">{attachments.length ? attachments.map((file) => file.name).join(", ") : "PDFs, resumes, or case studies"}</span></span>
+                                <FileText className="h-4 w-4 text-text-muted" />
+                            </label>
                         </div>
                     </div>
 
-                    {/* Attachments */}
-                    <div className="card p-6">
-                        <div className="flex items-start gap-4 mb-4">
-                            <div className="p-2.5 rounded-lg bg-bg-elevated">
-                                <FileText className="w-5 h-5 text-text-muted" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-text-primary">Context & Attachments</h3>
-                                <p className="text-sm text-text-secondary mt-0.5">
-                                    Upload resume or case study for AI context
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="relative">
-                            <input
-                                type="file"
-                                multiple
-                                onChange={handleFileChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            />
-                            <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${attachments.length > 0
-                                    ? 'border-accent bg-accent/5'
-                                    : 'border-border hover:border-border-strong'
-                                }`}>
-                                {attachments.length > 0 ? (
-                                    <div className="space-y-2">
-                                        <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center mx-auto">
-                                            <CheckCircle className="w-5 h-5 text-accent" />
-                                        </div>
-                                        <p className="font-medium text-accent">{attachments.length} file(s) selected</p>
-                                        <p className="text-xs text-text-muted">{attachments.map(f => f.name).join(", ")}</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <div className="w-10 h-10 rounded-lg bg-bg-elevated flex items-center justify-center mx-auto">
-                                            <Upload className="w-5 h-5 text-text-muted" />
-                                        </div>
-                                        <p className="font-medium text-text-primary">Drop files here</p>
-                                        <p className="text-sm text-text-muted">or click to browse</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                    <div className="workflow-step">
+                        <span className="workflow-marker">03</span>
+                        <div className="flex-1"><h2 className="workspace-section-title">Create drafts for new contacts</h2><p className="workspace-section-copy">We create drafts only; nothing sends automatically.</p></div>
+                        <button onClick={handleGenerate} disabled={loading || gmailConnected !== true} className="btn-primary shrink-0 text-sm">{loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating</> : <><Sparkles className="h-4 w-4" /> Generate drafts</>}</button>
                     </div>
 
-                    {/* Progress Bar */}
-                    {loading && progress.length > 0 && (
-                        <div className="w-full my-4">
-                            <div className="h-3 bg-border rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-accent transition-all duration-300"
-                                    style={{ width: `${(progress.filter(p => p.status === 'success').length / progress.length) * 100}%` }}
-                                />
-                            </div>
-                            <div className="text-xs text-center mt-1 text-text-secondary">
-                                {progress.filter(p => p.status === 'success').length} of {progress.length} drafts generated
-                            </div>
-                        </div>
-                    )}
+                    {loading && progress.length > 0 && <div className="mt-5 border-t border-border pt-5"><div className="flex justify-between text-xs text-text-muted"><span>Draft progress</span><span>{completeCount} / {progress.length}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-bg-elevated"><div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${(completeCount / progress.length) * 100}%` }} /></div></div>}
 
-                    {/* Result */}
-                    {result && (
-                        <div className="card p-6 bg-success/5 border-success/30">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
-                                    <CheckCircle className="w-5 h-5 text-success" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-semibold text-success">Generation Complete</h4>
-                                    <p className="text-sm text-text-secondary">
-                                        Drafted {result.success} emails
-                                        {result.failed > 0 && <span className="text-error"> ({result.failed} failed)</span>}
-                                    </p>
-                                    {/* Error details */}
-                                    {result.errors && result.errors.length > 0 && (
-                                        <div className="mt-2">
-                                            <h5 className="font-semibold text-error mb-1">Failed Drafts:</h5>
-                                            <ul className="list-disc pl-5 text-xs text-error">
-                                                {result.errors.map((err, idx) => (
-                                                    <li key={idx}>
-                                                        {err.contact ? <span>{err.contact}: </span> : null}
-                                                        {err.errors.join(", ")}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-                                <Link href="/dashboard/drafts" className="btn-secondary text-sm">
-                                    View Drafts <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
-                        </div>
-                    )}
+                    {result && <div className="mt-5 rounded-xl border border-success/30 bg-success-muted p-4"><div className="flex gap-3"><CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-success" /><div><p className="font-semibold text-text-primary">Generation complete</p><p className="mt-1 text-sm text-text-secondary">{result.success} draft{result.success === 1 ? " is" : "s are"} ready for review{result.failed ? `; ${result.failed} need attention.` : "."}</p>{result.errors?.length ? <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-error">{result.errors.map((error, index) => <li key={`${error.contact}-${index}`}>{error.contact ? `${error.contact}: ` : ""}{error.errors.join(", ")}</li>)}</ul> : null}</div></div></div>}
+                </section>
 
-                    {/* Generate Button */}
-                    <button
-                        onClick={handleGenerate}
-                        disabled={loading || gmailConnected !== true}
-                        className={`btn-primary w-full h-12 text-base font-semibold ${gmailConnected !== true ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        {loading ? (
-                            <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</>
-                        ) : (
-                            <><Send className="w-5 h-5" /> Generate Drafts</>
-                        )}
-                    </button>
-
-                    <p className="text-center text-sm text-text-muted">
-                        Creates drafts in your Gmail for all unprocessed contacts · Emails sent from <strong>your</strong> Gmail address
-                    </p>
-                </div>
+                <aside className="workspace-rail">
+                    <p className="data-line">Before you begin</p>
+                    <div className="mt-4 space-y-4 text-sm">
+                        <div><p className="font-semibold text-text-primary">Your profile</p><p className="mt-1 leading-6 text-text-secondary">Draft quality improves when your experience and highlights are current.</p><Link href="/dashboard/profile" className="action-link mt-2">Refine profile <ArrowRight className="h-4 w-4" /></Link></div>
+                        <div className="border-t border-border pt-4"><p className="font-semibold text-text-primary">Your contacts</p><p className="mt-1 leading-6 text-text-secondary">Campaigns use contacts that are still new in your workspace.</p><Link href="/dashboard/contacts" className="action-link mt-2">Review contacts <ArrowRight className="h-4 w-4" /></Link></div>
+                    </div>
+                </aside>
             </div>
         </div>
     );

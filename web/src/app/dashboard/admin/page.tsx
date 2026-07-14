@@ -120,10 +120,11 @@ export default function AdminPage() {
 
     return (
         <div className="page-container animate-in">
-            <div className="section-header flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="section-header flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                    <h1 className="section-title">Admin Dashboard</h1>
-                    <p className="section-description">Account controls, usage visibility, and credit management</p>
+                    <p className="coach-kicker">Operations</p>
+                    <h1 className="section-title mt-3">Keep account operations visible.</h1>
+                    <p className="section-description">A focused view of usage, account health, and credit adjustments.</p>
                 </div>
                 <button
                     type="button"
@@ -138,7 +139,7 @@ export default function AdminPage() {
             {error && <StatusBanner type="error" message={error} className="mb-6" />}
             {success && <StatusBanner type="success" message={success} className="mb-6" />}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-8">
                 <StatCard icon={UserRound} label="Total Accounts" value={overview.metrics.total_users} />
                 <StatCard icon={Activity} label="Live (30d)" value={overview.metrics.live_accounts_30d} />
                 <StatCard icon={MailCheck} label="Gmail Connected" value={overview.metrics.gmail_connected_accounts} />
@@ -148,18 +149,26 @@ export default function AdminPage() {
                 <StatCard icon={FileText} label="Draft Emails" value={overview.metrics.total_draft_emails} />
             </div>
 
-            <div className="mb-4 relative max-w-md">
+            <div className="mb-5 max-w-xl">
+                <label htmlFor="account-search" className="data-line">Find an account</label>
+                <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                 <input
+                    id="account-search"
                     type="text"
                     className="input pl-11"
                     placeholder="Search accounts by email, name, or ID"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                 />
+                </div>
             </div>
 
-            <div className="card overflow-hidden">
+            <div className="workspace-table">
+                <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="data-line">Account ledger</p><p className="mt-1 text-sm text-text-secondary">Adjust credits deliberately; changes apply immediately.</p></div>
+                    <span className="badge badge-default">{users.length} account{users.length === 1 ? "" : "s"}</span>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="table-header">

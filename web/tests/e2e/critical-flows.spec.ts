@@ -45,6 +45,15 @@ test.describe("critical frontend smoke flows", () => {
         await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
     });
 
+    test("pricing and guidance pages use the public experience", async ({ page }) => {
+        await page.goto("/pricing");
+        await expect(page.getByRole("heading", { name: "Pay for the messages you are ready to make personal." })).toBeVisible();
+
+        await page.goto("/docs");
+        await expect(page.getByText("A considered workflow")).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Getting Started" })).toBeVisible();
+    });
+
     test("dashboard route protects unauthenticated access", async ({ page }) => {
         await page.goto("/dashboard");
         await expectDashboardOrLogin(page, "Dashboard");
@@ -118,10 +127,10 @@ test.describe("critical frontend smoke flows", () => {
 
         await page.goto("/dashboard/campaigns");
         await page.getByRole("button", { name: "Generate Drafts" }).click();
-        await expect(page.getByText("Created 1 draft(s) in your Gmail!")).toBeVisible();
+        await expect(page.getByText("Created 1 draft. Review them before sending.")).toBeVisible();
 
         await page.goto("/dashboard/drafts");
         await page.getByRole("button", { name: "Send All (1)" }).click();
-        await expect(page.getByText("Batch send started!")).toBeVisible();
+        await expect(page.getByText("Batch send started.")).toBeVisible();
     });
 });

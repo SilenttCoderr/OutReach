@@ -37,15 +37,15 @@ export default function DocsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-bg-base">
+        <div className="docs-shell min-h-screen bg-bg-base">
             <MarketingHeader activePath="/docs" />
 
             <div className="flex pt-16">
                 {/* Sidebar */}
-                <aside className="hidden lg:block w-64 shrink-0 border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto p-4">
-                    <div className="flex items-center gap-2 mb-6 px-3">
-                        <Book className="w-5 h-5 text-accent" />
-                        <span className="font-semibold text-text-primary">Documentation</span>
+                <aside className="hidden lg:block w-72 shrink-0 border-r border-border bg-bg-surface/60 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto p-5">
+                    <div className="mb-8 px-3">
+                        <p className="coach-kicker">Guidance</p>
+                        <div className="mt-4 flex items-center gap-2"><Book className="w-5 h-5 text-accent" /><span className="font-bold tracking-tight text-text-primary">OutreachPro docs</span></div>
                     </div>
                     <nav className="space-y-1">
                         {sections.map((section) => (
@@ -65,7 +65,8 @@ export default function DocsPage() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
+                <main className="flex-1 max-w-4xl mx-auto px-6 py-12 lg:px-10">
+                    <div className="mb-10 border-b border-border pb-8"><p className="coach-kicker">A considered workflow</p><p className="mt-3 max-w-xl text-sm leading-6 text-text-secondary">Everything here follows the same rhythm: add context, choose people carefully, review drafts, then send when you are ready.</p></div>
                     {/* Mobile Navigation */}
                     <div className="lg:hidden mb-8">
                         <select

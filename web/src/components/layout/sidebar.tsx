@@ -42,6 +42,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { status } = useAuth();
     const isAdmin = Boolean(status?.is_admin);
+    const credits = status?.credits ?? 0;
 
     const preferences = useMemo(() => {
         if (!isAdmin) {
@@ -62,12 +63,12 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     const renderNavigation = (isMobile: boolean) => (
         <>
             {/* Logo */}
-            <div className="h-16 px-5 flex items-center justify-between border-b border-border">
+            <div className="h-20 px-5 flex items-center justify-between border-b border-border">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shadow-[0_12px_24px_-16px_#a23e2e]">
                         <Zap className="w-5 h-5 text-white" />
                     </div>
-                    <span className="font-bold text-lg text-text-primary">OutreachPro</span>
+                    <div><span className="block font-bold text-lg tracking-tight text-text-primary">OutreachPro</span><span className="block text-[11px] text-text-muted">Career outreach, considered</span></div>
                 </div>
 
                 {isMobile && (
@@ -81,9 +82,9 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
+            <nav className="flex-1 p-3 space-y-7 overflow-y-auto">
                 <div className="space-y-1">
-                    <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Workspace</p>
+                    <p className="data-line px-3 mb-2">Workspace</p>
                     {workspaceNavItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -105,7 +106,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                 </div>
 
                 <div className="space-y-1">
-                    <p className="px-3 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Preferences</p>
+                    <p className="data-line px-3 mb-2">Your account</p>
                     {preferences.map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -129,6 +130,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
             {/* Logout */}
             <div className="p-3 border-t border-border">
+                <div className="mb-3 rounded-xl bg-bg-elevated px-3 py-2.5"><p className="data-line">Draft credits</p><p className="mt-1 font-mono text-lg font-bold tracking-tight text-text-primary">{credits}</p></div>
                 <button
                     onClick={handleLogout}
                     className="nav-item w-full text-error hover:bg-error/10"
@@ -142,7 +144,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
     return (
         <>
-            <aside className="hidden lg:flex w-64 h-screen bg-bg-surface border-r border-border flex-col">
+            <aside className="hidden lg:flex w-[17rem] h-screen bg-bg-surface/90 border-r border-border flex-col backdrop-blur-sm">
                 {renderNavigation(false)}
             </aside>
 
@@ -155,7 +157,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                         onClick={onClose}
                     />
 
-                    <aside className="relative w-72 max-w-[85vw] h-full bg-bg-surface border-r border-border flex flex-col shadow-2xl">
+                    <aside role="dialog" aria-modal="true" aria-label="Navigation menu" className="relative w-72 max-w-[85vw] h-full bg-bg-surface border-r border-border flex flex-col shadow-2xl">
                         {renderNavigation(true)}
                     </aside>
                 </div>
