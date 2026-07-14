@@ -1,40 +1,38 @@
-import Link from "next/link";
-import { ArrowRight, FilePenLine, Sparkles, UserRound } from "lucide-react";
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Copy, FilePenLine, Loader2, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { createTemplate, deleteTemplate, fetchTemplates, updateTemplate, type TemplateKind, type TemplatePayload, type WorkspaceTemplate } from "@/services/api";
+import { IconButton } from "@/components/ui/icon-button";
+import { StatusBanner } from "@/components/ui/status-banner";
+
+const emptyPayload = (kind: TemplateKind): TemplatePayload => ({ kind, name: "", subject: "", body: "" });
 
 export default function TemplatesPage() {
-    return (
-        <div className="page-container animate-in">
-            <div className="max-w-3xl">
-                <p className="coach-kicker">Your voice first</p>
-                <h1 className="section-title mt-3">Templates</h1>
-                <p className="section-description">OutreachPro uses the context in your profile to shape each draft. There is no separate template library to maintain yet.</p>
+    const [kind, setKind] = useState<TemplateKind>("email");
+    const [templates, setTemplates] = useState<WorkspaceTemplate[]>([]);
+    const [query, setQuery] = useState("");
+    const [editing, setEditing] = useState<WorkspaceTemplate | null>(null);
+    const [draft, setDraft] = useState<TemplatePayload>(emptyPayload("email"));
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-                <div className="coach-panel mt-8 p-6 sm:p-8">
-                    <div className="flex items-start gap-4">
-                        <div className="rounded-xl bg-accent/15 p-3 text-accent">
-                            <Sparkles className="h-6 w-6" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold tracking-tight text-text-primary">Personalization starts with the details you share.</h2>
-                            <p className="mt-2 max-w-xl text-sm leading-6 text-text-secondary">Keep your background, highlights, and target roles current. Campaigns use that information to create drafts you can review and edit before sending.</p>
-                        </div>
-                    </div>
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                        <Link href="/dashboard/profile" className="card p-4 group hover:-translate-y-0.5">
-                            <UserRound className="h-5 w-5 text-accent" />
-                            <h3 className="mt-3 font-semibold text-text-primary">Refine your profile</h3>
-                            <p className="mt-1 text-sm text-text-secondary">Add the context that makes each note sound like you.</p>
-                            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent">Open profile <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
-                        </Link>
-                        <Link href="/dashboard/campaigns" className="card p-4 group hover:-translate-y-0.5">
-                            <FilePenLine className="h-5 w-5 text-accent" />
-                            <h3 className="mt-3 font-semibold text-text-primary">Create draft messages</h3>
-                            <p className="mt-1 text-sm text-text-secondary">Start a campaign, then review every draft in your workspace.</p>
-                            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent">Open campaigns <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    const loadTemplates = async () => { setLoading(true); try { setTemplates(await fetchTemplates()); } catch { setMessage({ type: "error", text: "Could not load your templates. Please try again." }); } finally { setLoading(false); } };
+    useEffect(() => { void loadTemplates(); }, []);
+
+    const visibleTemplates = useMemo(() => templates.filter((template) => template.kind === kind && `${template.name} ${template.subject || ""} ${template.body}`.toLowerCase().includes(query.toLowerCase())), [kind, query, templates]);
+    const startCreate = () => { setEditing(null); setDraft(emptyPayload(kind)); };
+    const startEdit = (template: WorkspaceTemplate) => { setEditing(template); setDraft({ kind: template.kind, name: template.name, subject: template.subject || "", body: template.body }); };
+    const duplicate = (template: WorkspaceTemplate) => { setEditing(null); setDraft({ kind: template.kind, name: `${template.name} copy`, subject: template.subject || "", body: template.body }); };
+    const save = async (event: FormEvent) => { event.preventDefault(); setSaving(true); setMessage(null); try { if (editing) await updateTemplate(editing.id, draft); else await createTemplate(draft); setMessage({ type: "success", text: editing ? "Template updated." : "Template created." }); setEditing(null); setDraft(emptyPayload(kind)); await loadTemplates(); } catch (error) { setMessage({ type: "error", text: error instanceof Error ? error.message : "Could not save template." }); } finally { setSaving(false); } };
+    const remove = async (template: WorkspaceTemplate) => { if (!window.confirm(`Delete ${template.name}?`)) return; try { await deleteTemplate(template.id); setMessage({ type: "success", text: "Template deleted." }); if (editing?.id === template.id) { setEditing(null); setDraft(emptyPayload(kind)); } await loadTemplates(); } catch { setMessage({ type: "error", text: "Could not delete template." }); } };
+    const changeKind = (nextKind: TemplateKind) => { setKind(nextKind); setEditing(null); setDraft(emptyPayload(nextKind)); setQuery(""); };
+
+    return <div className="page-container animate-in">
+        <div className="section-header flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div className="max-w-2xl"><p className="coach-kicker">Your library</p><h1 className="section-title mt-3">Templates and prompts, under your control.</h1><p className="section-description">Use email templates for repeatable structure and prompt presets for a reliable writing direction.</p></div><button type="button" className="btn-primary" onClick={startCreate}><Plus className="h-4 w-4" /> New {kind === "email" ? "template" : "prompt"}</button></div>
+        {message && <StatusBanner type={message.type} message={message.text} className="mb-6" />}
+        <div className="grid gap-5 xl:grid-cols-[minmax(19rem,.82fr)_minmax(0,1.18fr)]"><section className="workspace-table min-w-0"><div className="border-b border-border p-4"><div className="flex rounded-xl bg-bg-elevated p-1"><button type="button" onClick={() => changeKind("email")} className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${kind === "email" ? "bg-bg-surface text-text-primary shadow-sm" : "text-text-secondary"}`}>Email templates</button><button type="button" onClick={() => changeKind("prompt")} className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold ${kind === "prompt" ? "bg-bg-surface text-text-primary shadow-sm" : "text-text-secondary"}`}>AI prompts</button></div><div className="search-field mt-4"><Search aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} className="input" placeholder={`Search ${kind === "email" ? "templates" : "prompts"}…`} /></div></div>{loading ? <div className="space-y-3 p-5"><div className="h-16 animate-pulse rounded-xl bg-bg-elevated" /><div className="h-16 animate-pulse rounded-xl bg-bg-elevated" /></div> : visibleTemplates.length ? <div className="divide-y divide-border">{visibleTemplates.map((template) => <button key={template.id} type="button" onClick={() => startEdit(template)} className={`w-full px-5 py-4 text-left transition hover:bg-bg-elevated ${editing?.id === template.id ? "bg-accent/8" : ""}`}><span className="flex items-start gap-3"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${template.kind === "email" ? "bg-accent-muted text-accent" : "bg-success-muted text-success"}`}>{template.kind === "email" ? <FilePenLine className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block truncate font-semibold text-text-primary">{template.name}</span><span className="mt-1 block line-clamp-2 text-xs leading-5 text-text-secondary">{template.kind === "email" ? template.subject || "No subject yet" : template.body}</span></span></span></button>)}</div> : <div className="p-8 text-center"><div className="workspace-empty-icon mx-auto"><Sparkles className="h-5 w-5" /></div><p className="mt-4 font-semibold text-text-primary">No {kind === "email" ? "email templates" : "prompts"} yet</p><p className="mt-1 text-sm leading-6 text-text-secondary">Create one to make your next campaign more intentional.</p></div>}</section>
+        <section className="coach-panel min-w-0 p-5 sm:p-7"><form onSubmit={save} className="space-y-5"><div className="flex items-start justify-between gap-4"><div><p className="data-line">{draft.kind === "email" ? "Email template" : "Prompt preset"}</p><h2 className="mt-2 text-xl font-bold tracking-tight text-text-primary">{editing ? `Edit ${editing.name}` : `Create a ${draft.kind === "email" ? "template" : "prompt"}`}</h2></div>{editing && <IconButton type="button" onClick={() => { setEditing(null); setDraft(emptyPayload(kind)); }} label="Close editor"><X className="h-4 w-4" /></IconButton>}</div><div className="field-stack"><label className="field-label" htmlFor="template-name">Name</label><input id="template-name" required value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} className="input" placeholder={draft.kind === "email" ? "Referral introduction" : "Concise technical introduction"} /></div>{draft.kind === "email" && <div className="field-stack"><label className="field-label" htmlFor="template-subject">Subject</label><input id="template-subject" required value={draft.subject || ""} onChange={(event) => setDraft({ ...draft, subject: event.target.value })} className="input" placeholder="{your_name} — interest in {company}" /></div>}<div className="field-stack"><label className="field-label" htmlFor="template-body">{draft.kind === "email" ? "Message body" : "Writing instructions"}</label><textarea id="template-body" required rows={draft.kind === "email" ? 12 : 10} value={draft.body} onChange={(event) => setDraft({ ...draft, body: event.target.value })} className="input min-h-52 resize-y leading-7" placeholder={draft.kind === "email" ? "Hi {name},\n\nI am reaching out about {company}…" : "Keep this direct, technical, and under four sentences. Lead with a relevant accomplishment."} /></div>{draft.kind === "email" && <p className="rounded-xl bg-bg-elevated p-3 text-xs leading-5 text-text-secondary">Available placeholders: <code>{"{name}"}</code>, <code>{"{company}"}</code>, <code>{"{role}"}</code>, <code>{"{your_name}"}</code>.</p>}<div className="flex flex-wrap justify-between gap-2 border-t border-border pt-5"><div>{editing && <button type="button" onClick={() => void remove(editing)} className="btn-ghost border border-error/30 text-error hover:bg-error-muted"><Trash2 className="h-4 w-4" /> Delete</button>}</div><div className="flex gap-2">{editing && <button type="button" onClick={() => duplicate(editing)} className="btn-secondary"><Copy className="h-4 w-4" /> Duplicate</button>}<button type="submit" disabled={saving} className="btn-primary">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}{saving ? "Saving" : editing ? "Save changes" : "Create"}</button></div></div></form></section></div>
+    </div>;
 }

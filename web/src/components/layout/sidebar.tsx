@@ -144,7 +144,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
     return (
         <>
-            <aside className="hidden lg:flex w-[17rem] h-screen bg-bg-surface/90 border-r border-border flex-col backdrop-blur-sm">
+            <aside className="sticky top-0 hidden h-dvh w-[17rem] shrink-0 lg:flex bg-bg-surface/90 border-r border-border flex-col backdrop-blur-sm">
                 {renderNavigation(false)}
             </aside>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload, Users, Search, Plus, X, Pencil, Trash2 } from "lucide-react";
 import { uploadCSV, fetchContacts, addManualContact, updateContact, deleteContact, type Contact } from "@/services/api";
 import { IconButton } from "@/components/ui/icon-button";
@@ -16,6 +16,7 @@ export default function ContactsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [addingManual, setAddingManual] = useState(false);
     const [editingContactId, setEditingContactId] = useState<string | null>(null);
+    const dialogRef = useRef<HTMLDivElement>(null);
     const [manualForm, setManualForm] = useState<{ name: string; email: string; company: string; role: string }>({
         name: "",
         email: "",
@@ -26,6 +27,24 @@ export default function ContactsPage() {
     useEffect(() => {
         void loadContacts();
     }, []);
+
+    useEffect(() => {
+        if (!isModalOpen) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        dialogRef.current?.focus();
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsModalOpen(false);
+                resetManualForm();
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [isModalOpen]);
 
     async function loadContacts() {
         try {
@@ -188,15 +207,15 @@ export default function ContactsPage() {
             {/* Search */}
             <div className="mb-6 max-w-xl">
                 <label htmlFor="contact-search" className="data-line">Find someone in your list</label>
-                <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                <div className="search-field mt-2">
+                <Search aria-hidden="true" />
                 <input
                     id="contact-search"
                     type="text"
                     placeholder="Search contacts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="input pl-11"
+                    className="input"
                 />
                 </div>
             </div>
@@ -283,8 +302,9 @@ export default function ContactsPage() {
 
             {/* Add Contact Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" className="bg-bg-elevated border border-border rounded-xl w-full max-w-md shadow-2xl p-6 relative">
+                <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50 backdrop-blur-sm">
+                    <button type="button" aria-label="Close contact dialog" className="absolute inset-0 cursor-default" onClick={() => { setIsModalOpen(false); resetManualForm(); }} />
+                    <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" className="modal-surface relative w-full max-w-md rounded-xl border border-border bg-bg-elevated p-6 shadow-2xl">
                         <IconButton
                             onClick={() => {
                                 setIsModalOpen(false);

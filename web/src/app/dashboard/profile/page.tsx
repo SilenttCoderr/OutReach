@@ -26,6 +26,7 @@ export default function ProfilePage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [viewMode, setViewMode] = useState(false);
+    const [skillInput, setSkillInput] = useState("");
 
     const [profile, setProfile] = useState<UserProfile>({
         full_name: "",
@@ -46,8 +47,7 @@ export default function ProfilePage() {
                 const data = await fetchProfile();
                 const normalizedProfile: UserProfile = {
                     ...data,
-                    // Ensure arrays have at least one empty string if empty
-                    key_skills: data.key_skills?.length ? data.key_skills : [""],
+                    key_skills: data.key_skills || [],
                     highlights: data.highlights?.length ? data.highlights : [""]
                 };
                 setProfile(normalizedProfile);
@@ -83,7 +83,7 @@ export default function ProfilePage() {
             // Re-pad arrays if they're empty now
             setProfile({
                 ...cleanedProfile,
-                key_skills: cleanedProfile.key_skills.length ? cleanedProfile.key_skills : [""],
+                key_skills: cleanedProfile.key_skills,
                 highlights: cleanedProfile.highlights.length ? cleanedProfile.highlights : [""]
             });
             setViewMode(true);
@@ -109,6 +109,15 @@ export default function ProfilePage() {
         if (newArray.length === 0) newArray.push("");
         setProfile({ ...profile, [field]: newArray });
     };
+
+    const addSkills = () => {
+        const additions = skillInput.split(",").map((skill) => skill.trim()).filter(Boolean);
+        if (!additions.length) return;
+        setProfile((current) => ({ ...current, key_skills: Array.from(new Set([...current.key_skills.filter(Boolean), ...additions])) }));
+        setSkillInput("");
+    };
+
+    const removeSkill = (skill: string) => setProfile((current) => ({ ...current, key_skills: current.key_skills.filter((item) => item !== skill) }));
 
     if (loading) {
         return (
@@ -233,7 +242,7 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="text-sm text-text-secondary">
-                            Sign-off: <span className="text-text-primary">{profile.email_sign_off || "Best regards,"}</span>
+                            Sign-off: <span className="whitespace-pre-wrap text-text-primary">{profile.email_sign_off || "Best regards,"}</span>
                         </div>
                     </div>
                 )}
@@ -260,13 +269,13 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="field-stack">
                                     <label className="field-label">Email Sign-off</label>
-                                    <input
-                                        type="text"
+                                    <textarea
+                                        rows={3}
                                         required
-                                        className="input-field"
+                                        className="input-field min-h-24 resize-y leading-relaxed"
                                         value={profile.email_sign_off}
                                         onChange={e => setProfile({...profile, email_sign_off: e.target.value})}
-                                        placeholder="e.g. Best regards,"
+                                        placeholder={"Best regards,\nYour name"}
                                     />
                                 </div>
                                 <div className="field-stack">
@@ -337,7 +346,8 @@ export default function ProfilePage() {
                                     <p className="field-help">A one- or two-sentence introduction that appears in your outreach.</p>
                                     <textarea
                                         required
-                                        className="input-field min-h-28 resize-y leading-relaxed"
+                                        rows={7}
+                                        className="input-field min-h-52 resize-y leading-relaxed"
                                         value={profile.experience_summary}
                                         onChange={e => setProfile({...profile, experience_summary: e.target.value})}
                                         placeholder="e.g. Over the past 3 years, I've developed scalable microservices in Go and optimized database performance, leading to a 30% reduction in latency."
@@ -380,31 +390,14 @@ export default function ProfilePage() {
                                     <div className="flex items-center justify-between">
                                         <label className="field-label">Core Skills</label>
                                     </div>
-                                    {profile.key_skills.map((skill, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                            <input
-                                                type="text"
-                                                className="input-field flex-1"
-                                                value={skill}
-                                                onChange={e => handleArrayChange('key_skills', index, e.target.value)}
-                                                placeholder="e.g. Python, React, PostgreSQL"
-                                            />
-                                            <button 
-                                                type="button" 
-                                                onClick={() => removeArrayItem('key_skills', index)}
-                                                className="rounded-lg p-2 text-text-muted hover:bg-error/10 hover:text-error transition-colors"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                    <button 
-                                        type="button"
-                                        onClick={() => addArrayItem('key_skills')}
-                                        className="action-link mt-2"
-                                    >
-                                        <Plus className="w-4 h-4" /> Add Skill
-                                    </button>
+                                    <p className="field-help">Type a skill, then press Enter or comma. Full skill names remain visible.</p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {profile.key_skills.filter(Boolean).map((skill) => <span key={skill} className="skill-pill"><span>{skill}</span><button type="button" aria-label={`Remove ${skill}`} onClick={() => removeSkill(skill)}><X className="h-3.5 w-3.5" /></button></span>)}
+                                    </div>
+                                    <div className="mt-3 flex gap-2">
+                                        <input className="input-field" value={skillInput} onChange={(event) => setSkillInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === ",") { event.preventDefault(); addSkills(); } }} placeholder="e.g. Python, React, PostgreSQL" />
+                                        <button type="button" onClick={addSkills} className="btn-secondary shrink-0">Add skill</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

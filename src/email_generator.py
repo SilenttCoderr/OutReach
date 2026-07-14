@@ -69,6 +69,10 @@ class EmailGenerator:
             raise ValueError(f"Template '{template_name}' not found: {e}")
         
         # Prepare context
+        full_name = str(profile_data.get("full_name") or "").strip()
+        sign_off = str(profile_data.get("email_sign_off") or "Best").strip()
+        email_signature = sign_off if full_name and full_name.casefold() in sign_off.casefold() else "\n".join(filter(None, [sign_off, full_name]))
+
         context = {
             "recruiter_name": recruiter_name,
             "recruiter_email": recruiter.get("recruiter_email") or "",
@@ -76,6 +80,7 @@ class EmailGenerator:
             "role": recruiter.get("role") or "AI/ML",
             "company_type": recruiter.get("company_type") or "",
             "company_note": custom_note or recruiter.get("notes") or "",
+            "email_signature": email_signature,
             **profile_data  # Include all profile data
         }
         

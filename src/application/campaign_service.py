@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from src.database import SessionLocal
 from src.email_generator import EmailGenerator
 from src.infrastructure.gmail_adapter import GmailAdapter
-from src.models import Contact, EmailLog, User
+from src.models import Contact, EmailLog, Template, User
 
 
 def _validate_contact(contact):
@@ -48,6 +48,49 @@ def _get_user_profile(db: Session, user_id: int) -> Dict:
     if not profile:
         raise ValueError("Profile not set up. Complete your profile before sending emails.")
     return profile.to_dict()
+
+
+def _get_owned_template(
+    db: Session,
+    user_id: int,
+    template_id: int,
+    expected_kind: str,
+) -> Template:
+    template = (
+        db.query(Template)
+        .filter(
+            Template.id == template_id,
+            Template.user_id == user_id,
+            Template.kind == expected_kind,
+        )
+        .first()
+    )
+    if not template:
+        raise LookupError(f"{expected_kind.title()} template not found")
+    return template
+
+
+def _render_template_placeholders(template_text: Optional[str], placeholders: Dict[str, str]) -> str:
+    rendered = template_text or ""
+    for key, value in placeholders.items():
+        rendered = rendered.replace(f"{{{key}}}", value)
+    return rendered
+
+
+def _render_email_template(template: Template, contact: Contact, user_profile: Dict, has_attachments: bool) -> Dict[str, str]:
+    placeholders = {
+        "name": contact.name or "",
+        "company": contact.company or "",
+        "role": contact.role or "",
+        "your_name": user_profile.get("full_name", "") or "",
+    }
+    subject = _render_template_placeholders(template.subject, placeholders).strip()
+    body = _render_template_placeholders(template.body, placeholders).strip()
+
+    if has_attachments:
+        body = f"{body}\n\nI've attached my resume for your reference."
+
+    return {"subject": subject, "body": body}
 
 
 def _set_contact_status(db: Session, user_id: int, recipient_email: str, status: str) -> None:
@@ -188,7 +231,9 @@ def create_drafts_for_new_contacts(
     user: User,
     use_llm: bool,
     attachment_paths: Optional[List[str]] = None,
-) -> Dict[str, int]:
+    template_id: Optional[int] = None,
+    prompt_id: Optional[int] = None,
+) -> Dict[str, object]:
     gmail = GmailAdapter(user)
     if not gmail.authenticate():
         raise PermissionError("Gmail not connected. Please login with Google again.")
@@ -200,8 +245,14 @@ def create_drafts_for_new_contacts(
     if user.credits < len(contacts):
         raise ValueError(f"Insufficient credits. You have {user.credits} but need {len(contacts)}.")
 
-    generator = _get_generator(use_llm)
     user_profile = _get_user_profile(db, user.id)
+    selected_template = (
+        _get_owned_template(db, user.id, template_id, "email") if template_id is not None else None
+    )
+    selected_prompt = (
+        _get_owned_template(db, user.id, prompt_id, "prompt") if prompt_id is not None else None
+    )
+    generator = None if selected_template is not None else _get_generator(use_llm)
 
     success = 0
     failed = 0
@@ -231,18 +282,27 @@ def create_drafts_for_new_contacts(
             })
             continue
         try:
-            recruiter_data = {
-                "recruiter_name": contact.name,
-                "recruiter_email": contact.email,
-                "company": contact.company,
-                "role": contact.role,
-                "company_type": "unknown",
-            }
-            result = generator.generate(
-                recruiter_data,
-                user_profile=user_profile,
-                has_attachments=bool(attachment_paths),
-            )
+            if selected_template is not None:
+                result = _render_email_template(
+                    selected_template,
+                    contact,
+                    user_profile,
+                    has_attachments=bool(attachment_paths),
+                )
+            else:
+                recruiter_data = {
+                    "recruiter_name": contact.name,
+                    "recruiter_email": contact.email,
+                    "company": contact.company,
+                    "role": contact.role,
+                    "company_type": "unknown",
+                }
+                result = generator.generate(
+                    recruiter_data,
+                    user_profile=user_profile,
+                    custom_note=selected_prompt.body if use_llm and selected_prompt else None,
+                    has_attachments=bool(attachment_paths),
+                )
             draft_result = gmail.create_draft(
                 contact.email,
                 result["subject"],
@@ -303,7 +363,7 @@ def create_drafts_for_new_contacts(
     }
 
 
-def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
+def _reconcile_draft_logs(db: Session, user_id: int) -> tuple[List[EmailLog], bool]:
     user = db.query(User).filter(User.id == user_id).first()
     logs = (
         db.query(EmailLog)
@@ -312,12 +372,14 @@ def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
         .all()
     )
 
-    if not logs or not user:
-        return logs
+    if not user:
+        return logs, False
 
     gmail = GmailAdapter(user)
     if not gmail.authenticate():
-        return logs  # degrade gracefully
+        return logs, False
+    if not logs:
+        return logs, True
 
     synced_logs = []
     has_changes = False
@@ -337,10 +399,26 @@ def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
             db.query(EmailLog)
             .filter(EmailLog.user_id == user_id, EmailLog.status == "draft")
             .order_by(EmailLog.created_at.desc())
-            .all()
+            .all(),
+            True,
         )
 
-    return synced_logs
+    return synced_logs, True
+
+
+def get_draft_logs(db: Session, user_id: int) -> List[EmailLog]:
+    """Return local drafts, reconciling deleted Gmail drafts when Gmail is available."""
+    drafts, _ = _reconcile_draft_logs(db, user_id)
+    return drafts
+
+
+def sync_draft_logs(db: Session, user_id: int) -> Dict[str, object]:
+    drafts, gmail_checked = _reconcile_draft_logs(db, user_id)
+    return {
+        "drafts": drafts,
+        "synced_at": datetime.utcnow().isoformat() if gmail_checked else None,
+        "status": "gmail_checked" if gmail_checked else "local_only",
+    }
 
 
 def update_draft(db: Session, user: User, draft_id: int, subject: str, body: str) -> Dict[str, str]:

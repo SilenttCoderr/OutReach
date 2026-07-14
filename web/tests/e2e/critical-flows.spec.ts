@@ -92,14 +92,14 @@ test.describe("critical frontend smoke flows", () => {
         await expect(page.getByText("Failed to load contacts. Please refresh and try again.")).toBeVisible();
     });
 
-    test("account-removal requests require confirmation", async ({ page }) => {
+    test("account-deactivation requests require confirmation", async ({ page }) => {
         await authenticate(page);
         await page.goto("/dashboard/settings");
 
-        await page.getByRole("button", { name: "Request removal" }).click();
-        await expect(page.getByRole("dialog", { name: "Request account removal" })).toBeVisible();
-        await page.getByRole("button", { name: "Continue" }).click();
-        await expect(page.getByText("Self-service deletion is not enabled. Please contact support to request account removal; nothing was deleted here.")).toBeVisible();
+        await page.getByRole("button", { name: "Request deactivation" }).click();
+        await expect(page.getByRole("dialog", { name: "Request account deactivation" })).toBeVisible();
+        await page.getByRole("button", { name: "Show support instructions" }).click();
+        await expect(page.getByText("Contact support from your account email to request deactivation. No account data was changed.")).toBeVisible();
     });
 
     test("a user can move from contacts to draft generation and sending", async ({ page }) => {
@@ -116,7 +116,9 @@ test.describe("critical frontend smoke flows", () => {
             if (path === "/api/upload") return route.fulfill({ json: { message: "Uploaded", contacts_added: 1 } });
             if (path === "/api/contacts") return route.fulfill({ json: { contacts: [] } });
             if (path === "/api/draft") return route.fulfill({ json: { success: 1, failed: 0, total: 1, progress: [] } });
+            if (path === "/api/templates") return route.fulfill({ json: { templates: [] } });
             if (path === "/api/drafts") return route.fulfill({ json: [{ id: 1, recipient_email: "sarah@example.com", recipient_name: "Sarah", company: "Acme", subject: "Hello", body: "Hi Sarah", status: "draft", created_at: "2026-07-14T00:00:00Z" }] });
+            if (path === "/api/drafts/sync") return route.fulfill({ json: { drafts: [{ id: 1, recipient_email: "sarah@example.com", recipient_name: "Sarah", company: "Acme", subject: "Hello", body: "Hi Sarah", status: "draft", created_at: "2026-07-14T00:00:00Z" }], synced_at: "2026-07-14T00:00:00Z" } });
             if (path === "/api/send-all") return route.fulfill({ json: { message: "Queued", queued: 1 } });
             return route.fulfill({ json: {} });
         });

@@ -118,6 +118,7 @@ class LLMEmailGenerator:
             "recruiter": recruiter,
             "user_profile": user_profile,
             "has_attachments": has_attachments,
+            "prompt_instructions": custom_note or "",
         }
 
         start_time = datetime.now()

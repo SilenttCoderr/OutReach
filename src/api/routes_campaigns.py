@@ -1,5 +1,7 @@
 """Campaign and email workflow API routes."""
 
+import uuid
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
@@ -11,6 +13,7 @@ from src.models import User
 from src.schemas.campaigns import (
     ClearTrackingResponse,
     DraftGenerationResponse,
+    DraftSyncResponse,
     DraftUpdateRequest,
     DraftUpdateResponse,
     SendAllDraftsResponse,
@@ -19,6 +22,55 @@ from src.schemas.campaigns import (
 )
 
 router = APIRouter(tags=["Campaigns"])
+
+MAX_ATTACHMENT_BYTES = 18 * 1024 * 1024
+CHUNK_SIZE = 1024 * 1024
+
+
+async def _store_pdf_attachments(attachments: List[UploadFile], user_id: int) -> List[str]:
+    """Validate and stage PDF attachments just long enough to create Gmail drafts."""
+    if not attachments:
+        return []
+
+    user_att_dir = UPLOAD_DIR / str(user_id) / "attachments"
+    user_att_dir.mkdir(parents=True, exist_ok=True)
+    stored_paths: List[Path] = []
+    total_bytes = 0
+
+    try:
+        for attachment in attachments:
+            original_name = Path(attachment.filename or "")
+            if not attachment.filename or original_name.name != attachment.filename or original_name.suffix.lower() != ".pdf":
+                raise ValueError("Attachments must be PDF files.")
+
+            destination = user_att_dir / f"{uuid.uuid4().hex}.pdf"
+            current_size = 0
+            first_chunk = True
+            with destination.open("wb") as output:
+                while chunk := await attachment.read(CHUNK_SIZE):
+                    if first_chunk:
+                        first_chunk = False
+                        if not chunk.startswith(b"%PDF-"):
+                            raise ValueError("Attachments must be valid PDF files.")
+                    current_size += len(chunk)
+                    total_bytes += len(chunk)
+                    if total_bytes > MAX_ATTACHMENT_BYTES:
+                        raise ValueError("Combined attachments must be 18 MB or smaller.")
+                    output.write(chunk)
+            if first_chunk or current_size == 0:
+                raise ValueError("Attachments must be valid PDF files.")
+            stored_paths.append(destination)
+    except Exception:
+        for path in stored_paths:
+            path.unlink(missing_ok=True)
+        if "destination" in locals():
+            destination.unlink(missing_ok=True)
+        raise
+    finally:
+        for attachment in attachments:
+            await attachment.close()
+
+    return [str(path) for path in stored_paths]
 
 
 @router.get("/stats", response_model=StatsResponse)
@@ -57,39 +109,38 @@ async def preview_emails(
 async def create_drafts(
     request: Request,
     use_llm: str = Form("false"),
+    template_id: Optional[int] = Form(default=None),
+    prompt_id: Optional[int] = Form(default=None),
     attachments: List[UploadFile] = File(default=[]),
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),
 ):
     """Create Gmail drafts for all new contacts."""
     use_llm_bool = use_llm.lower() in ("true", "1", "yes", "on")
-    has_attachments = len(attachments) > 0
-
-    attachment_paths: List[str] = []
-    if has_attachments:
-        user_att_dir = UPLOAD_DIR / str(user.id) / "attachments"
-        user_att_dir.mkdir(parents=True, exist_ok=True)
-        for attachment in attachments:
-            if attachment.filename:
-                attachment_path = user_att_dir / attachment.filename
-                with open(attachment_path, "wb") as f:
-                    import shutil
-
-                    shutil.copyfileobj(attachment.file, f)
-                attachment_paths.append(str(attachment_path))
+    try:
+        attachment_paths = await _store_pdf_attachments(attachments, user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     try:
         return campaign_service.create_drafts_for_new_contacts(
             db,
             user,
             use_llm=use_llm_bool,
             attachment_paths=attachment_paths if attachment_paths else None,
+            template_id=template_id,
+            prompt_id=prompt_id,
         )
     except PermissionError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         message = str(exc)
         status_code = 402 if message.startswith("Insufficient credits") else 400
         raise HTTPException(status_code=status_code, detail=message) from exc
+    finally:
+        for attachment_path in attachment_paths:
+            Path(attachment_path).unlink(missing_ok=True)
 
 
 @router.get("/drafts")
@@ -135,13 +186,13 @@ async def delete_draft(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-@router.post("/drafts/sync")
+@router.post("/drafts/sync", response_model=DraftSyncResponse)
 async def sync_drafts(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db_session),
 ):
     """Force a manual sync of all draft logs."""
-    return campaign_service.get_draft_logs(db, user.id)
+    return campaign_service.sync_draft_logs(db, user.id)
 
 @router.post("/send/{draft_id}", response_model=SendDraftResponse)
 @limiter.limit("20/minute")

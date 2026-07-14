@@ -14,6 +14,7 @@ from src.api.routes_admin import router as admin_router
 from src.api.routes_campaigns import router as campaigns_router
 from src.api.routes_contacts import router as contacts_router
 from src.api.routes_profile import router as profile_router
+from src.api.routes_templates import router as templates_router
 from src.auth_routes import router as auth_router
 from src.config import validate_startup_configuration
 from src.database import Base, engine
@@ -49,12 +50,60 @@ app.add_middleware(
 )
 
 
+def run_startup_migrations() -> None:
+    """Apply lightweight idempotent schema fixes for existing databases."""
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+
+    users_cols = [col["name"] for col in inspector.get_columns("users")]
+    if "password_hash" not in users_cols:
+        print("Adding password_hash column to users table...")
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+            conn.commit()
+        print("Password hash column added successfully.")
+    if "templates_seeded_at" not in users_cols:
+        print("Adding templates_seeded_at column to users table...")
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN templates_seeded_at DATETIME"))
+            conn.commit()
+        print("Template seed marker added successfully.")
+
+    email_logs_cols = [col["name"] for col in inspector.get_columns("email_logs")]
+    if "body" not in email_logs_cols:
+        print("Adding body column to email_logs table...")
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE email_logs ADD COLUMN body TEXT"))
+            conn.commit()
+        print("Body column added successfully.")
+
+    table_names = set(inspector.get_table_names())
+    if "user_profiles" in table_names:
+        user_profile_columns = {col["name"]: col for col in inspector.get_columns("user_profiles")}
+        sign_off_column = user_profile_columns.get("email_sign_off")
+        if sign_off_column:
+            sign_off_type = str(sign_off_column["type"]).lower()
+            if engine.dialect.name == "postgresql" and sign_off_type != "text":
+                print("Updating user_profiles.email_sign_off to TEXT...")
+                with engine.connect() as conn:
+                    conn.execute(
+                        text("ALTER TABLE user_profiles ALTER COLUMN email_sign_off TYPE TEXT")
+                    )
+                    conn.commit()
+                print("email_sign_off column updated successfully.")
+            elif engine.dialect.name.startswith("mysql") and "text" not in sign_off_type:
+                print("Updating user_profiles.email_sign_off to TEXT...")
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE user_profiles MODIFY email_sign_off TEXT"))
+                    conn.commit()
+                print("email_sign_off column updated successfully.")
+
+
 @app.on_event("startup")
 async def startup():
     """Create database tables on startup and run migrations."""
     validate_startup_configuration()
-
-    from sqlalchemy import inspect, text
 
     try:
         Base.metadata.create_all(bind=engine)
@@ -64,23 +113,7 @@ async def startup():
         return
 
     try:
-        inspector = inspect(engine)
-
-        users_cols = [col["name"] for col in inspector.get_columns("users")]
-        if "password_hash" not in users_cols:
-            print("Adding password_hash column to users table...")
-            with engine.connect() as conn:
-                conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
-                conn.commit()
-            print("Password hash column added successfully.")
-
-        email_logs_cols = [col["name"] for col in inspector.get_columns("email_logs")]
-        if "body" not in email_logs_cols:
-            print("Adding body column to email_logs table...")
-            with engine.connect() as conn:
-                conn.execute(text("ALTER TABLE email_logs ADD COLUMN body TEXT"))
-                conn.commit()
-            print("Body column added successfully.")
+        run_startup_migrations()
     except Exception as e:
         print(f"Migration check: {e}")
 
@@ -106,6 +139,7 @@ app.include_router(stripe_router, prefix="/api")
 app.include_router(campaigns_router, prefix="/api")
 app.include_router(contacts_router, prefix="/api")
 app.include_router(profile_router, prefix="/api")
+app.include_router(templates_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 
 

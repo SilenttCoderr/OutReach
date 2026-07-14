@@ -6,5 +6,4 @@ I'm a {{ degree }} student at {{ university }} with experience as a {{ current_t
 
 How can I start the interview process?
 
-{{ email_sign_off }},
-{{ full_name }}
+{{ email_signature }}
